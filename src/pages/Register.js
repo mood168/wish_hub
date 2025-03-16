@@ -3,12 +3,14 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useDatabase } from '../context/DatabaseContext';
 import { useSignUp, useUser } from '@clerk/clerk-react';
 import { handleClerkSignUp } from '../utils/clerkUtils';
+import { useAuth } from '../contexts/AuthContext';
 
 function Register() {
   const navigate = useNavigate();
   const { userService } = useDatabase();
   const { signUp, isLoaded: isSignUpLoaded } = useSignUp();
   const { user, isLoaded: isUserLoaded } = useUser();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -37,14 +39,14 @@ function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // 簡單的表單驗證
-    if (!formData.name.trim() || !formData.email.trim() || !formData.password.trim() || !formData.confirmPassword.trim()) {
-      setError('請填寫所有必填欄位');
+    // 基本驗證
+    if (formData.password !== formData.confirmPassword) {
+      setError('密碼不匹配');
       return;
     }
     
-    if (formData.password !== formData.confirmPassword) {
-      setError('密碼和確認密碼不匹配');
+    if (formData.password.length < 6) {
+      setError('密碼長度必須至少為 6 個字符');
       return;
     }
     
@@ -53,50 +55,48 @@ function Register() {
       return;
     }
     
-    // 模擬註冊請求
     setLoading(true);
     setError('');
     
     try {
-      // 檢查電子郵件是否已被使用
+      // 檢查郵箱是否已存在
       const existingUser = await userService.getUserByEmail(formData.email);
-      
       if (existingUser) {
-        setError('此電子郵件已被註冊');
-        setLoading(false);
-        return;
+        throw new Error('該郵箱已被註冊');
       }
       
       // 創建新用戶
-      await userService.saveUser({
-        name: formData.name,
+      const newUser = {
         email: formData.email,
-        avatar: 'https://randomuser.me/api/portraits/men/1.jpg',
-        joinDate: new Date().toISOString()
-      });
+        name: formData.name,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        settings: {
+          theme: 'light',
+          notifications: true,
+          language: 'zh-TW'
+        }
+      };
       
-      // 設置登入狀態
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('userEmail', formData.email);
-      localStorage.setItem('userName', formData.name);
-      localStorage.setItem('isNewUser', 'true'); // 標記為新用戶，需要完成引導
+      // 保存用戶到數據庫
+      await userService.createUser(newUser);
       
-<<<<<<< HEAD
+      // 自動登入新用戶
+      await login(formData.email, formData.password);
+      
+      // 設置新用戶標記
+      localStorage.setItem('isNewUser', 'true');
+      
       setLoading(false);
       
       // 導航到引導頁面
       navigate('/onboarding');
-    }, 1500);
-=======
-      // 導航到首頁
-      navigate('/home');
+      
     } catch (err) {
-      console.error('註冊時出錯:', err);
-      setError('註冊時發生錯誤，請稍後再試');
-    } finally {
+      console.error('註冊錯誤:', err);
+      setError(err.message);
       setLoading(false);
     }
->>>>>>> ee3b1abbeb0576ed117d76794f70f7cf5168bc3a
   };
   
   // 處理 Google 註冊

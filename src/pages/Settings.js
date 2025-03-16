@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-<<<<<<< HEAD
 import { useLanguage } from '../contexts/LanguageContext';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -121,75 +120,14 @@ function Settings() {
     document.documentElement.style.setProperty('--primary-color', selectedColor.primary);
     document.documentElement.style.setProperty('--primary-light', selectedColor.light);
     document.documentElement.style.setProperty('--primary-color-rgb', selectedColor.rgb);
-=======
-import { useDatabase } from '../context/DatabaseContext';
-import { useTheme } from '../context/ThemeContext';
-import ProfileEditModal from '../components/ProfileEditModal';
-
-function Settings() {
-  const navigate = useNavigate();
-  const { userService } = useDatabase();
-  const { darkMode, toggleDarkMode } = useTheme();
-  const [notifications, setNotifications] = useState(true);
-  const [language, setLanguage] = useState('zh-TW');
-  const [user, setUser] = useState({
-    name: '',
-    email: '',
-    avatar: '',
-    joinDate: ''
-  });
-  const [showEditModal, setShowEditModal] = useState(false);
-  
-  // 獲取用戶資料的函數
-  const fetchUserData = async () => {
-    const userEmail = localStorage.getItem('userEmail');
-    if (userEmail) {
-      try {
-        // 從資料庫獲取用戶資料
-        const userData = await userService.getUserByEmail(userEmail);
-        if (userData) {
-          setUser({
-            ...userData,
-            name: userData.name || localStorage.getItem('userName') || '用戶',
-            email: userData.email || userEmail,
-            avatar: userData.avatar || 'https://randomuser.me/api/portraits/men/1.jpg',
-            joinDate: userData.joinDate ? new Date(userData.joinDate).toLocaleDateString('zh-TW', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric'
-            }) : '未知'
-          });
-        } else {
-          // 如果資料庫中沒有用戶資料，則使用 localStorage 中的基本資訊
-          setUser({
-            name: localStorage.getItem('userName') || '用戶',
-            email: userEmail,
-            avatar: 'https://randomuser.me/api/portraits/men/1.jpg',
-            joinDate: '未知'
-          });
-        }
-      } catch (error) {
-        console.error('獲取用戶資料時出錯:', error);
-      }
-    }
->>>>>>> ee3b1abbeb0576ed117d76794f70f7cf5168bc3a
   };
-  
-  useEffect(() => {
-    fetchUserData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userService]);
 
   const handleDarkModeToggle = () => {
-<<<<<<< HEAD
     const newValue = !darkMode;
     setDarkMode(newValue);
     setSettingsChanged(true);
     // 立即應用深色模式
     applyDarkMode(newValue);
-=======
-    toggleDarkMode();
->>>>>>> ee3b1abbeb0576ed117d76794f70f7cf5168bc3a
   };
 
   const handleNotificationsToggle = () => {
@@ -293,17 +231,6 @@ function Settings() {
     { id: 'orange', name: texts.colorOptions.orange, color: '#e8b87b' },
     { id: 'gray', name: texts.colorOptions.gray, color: '#8e8e93' }
   ];
-
-  // 處理編輯個人資料
-  const handleEditProfile = () => {
-    setShowEditModal(true);
-  };
-
-  // 處理個人資料更新
-  const handleProfileUpdate = (updatedUser) => {
-    // 重新獲取用戶資料，確保顯示最新的資料
-    fetchUserData();
-  };
 
   return (
     <div className="content-area">
@@ -417,15 +344,6 @@ function Settings() {
         </button>
       </div>
       
-      {/* 編輯個人資料模態框 */}
-      {showEditModal && (
-        <ProfileEditModal 
-          user={user} 
-          onClose={() => setShowEditModal(false)} 
-          onSave={handleProfileUpdate} 
-        />
-      )}
-      
       {/* 應用設定 */}
       <div className="wish-card" style={{ padding: '20px' }}>
         <div style={{ 
@@ -500,18 +418,12 @@ function Settings() {
           justifyContent: 'space-between', 
           alignItems: 'center',
           padding: '12px 0',
-          borderBottom: '1px solid var(--border-color)'
+          borderBottom: '1px solid #e0e0e0'
         }}>
           <div>
-<<<<<<< HEAD
             <div>{texts.settings.appSettings.darkMode.title}</div>
             <div style={{ color: '#8e8e93', fontSize: '12px' }}>
               {texts.settings.appSettings.darkMode.desc}
-=======
-            <div>深色模式</div>
-            <div style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
-              切換應用的顯示主題
->>>>>>> ee3b1abbeb0576ed117d76794f70f7cf5168bc3a
             </div>
           </div>
           <div 
@@ -519,7 +431,7 @@ function Settings() {
             style={{
               width: '50px',
               height: '30px',
-              backgroundColor: darkMode ? 'var(--primary-color)' : '#e0e0e0',
+              backgroundColor: darkMode ? '#34c759' : '#e0e0e0',
               borderRadius: '15px',
               position: 'relative',
               cursor: 'pointer',
@@ -548,10 +460,9 @@ function Settings() {
           justifyContent: 'space-between', 
           alignItems: 'center',
           padding: '12px 0',
-          borderBottom: '1px solid var(--border-color)'
+          borderBottom: '1px solid #e0e0e0'
         }}>
           <div>
-<<<<<<< HEAD
             <div>{texts.settings.appSettings.fontSize.title}</div>
             <div style={{ color: '#8e8e93', fontSize: '12px' }}>
               {texts.settings.appSettings.fontSize.desc}
@@ -586,11 +497,6 @@ function Settings() {
             <div>{texts.settings.appSettings.notifications.title}</div>
             <div style={{ color: '#8e8e93', fontSize: '12px' }}>
               {texts.settings.appSettings.notifications.desc}
-=======
-            <div>通知</div>
-            <div style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
-              接收應用通知
->>>>>>> ee3b1abbeb0576ed117d76794f70f7cf5168bc3a
             </div>
           </div>
           <div 
@@ -598,7 +504,7 @@ function Settings() {
             style={{
               width: '50px',
               height: '30px',
-              backgroundColor: notifications ? 'var(--primary-color)' : '#e0e0e0',
+              backgroundColor: notifications ? '#34c759' : '#e0e0e0',
               borderRadius: '15px',
               position: 'relative',
               cursor: 'pointer',
@@ -739,18 +645,12 @@ function Settings() {
           justifyContent: 'space-between', 
           alignItems: 'center',
           padding: '12px 0',
-          borderBottom: '1px solid var(--border-color)'
+          borderBottom: '1px solid #e0e0e0'
         }}>
           <div>
-<<<<<<< HEAD
             <div>{texts.settings.appSettings.language.title}</div>
             <div style={{ color: '#8e8e93', fontSize: '12px' }}>
               {texts.settings.appSettings.language.desc}
-=======
-            <div>語言</div>
-            <div style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
-              選擇應用顯示語言
->>>>>>> ee3b1abbeb0576ed117d76794f70f7cf5168bc3a
             </div>
           </div>
           <select 
@@ -759,9 +659,8 @@ function Settings() {
             style={{
               padding: '8px',
               borderRadius: '8px',
-              border: '1px solid var(--border-color)',
-              backgroundColor: 'var(--card-background)',
-              color: 'var(--text-primary)'
+              border: '1px solid #e0e0e0',
+              backgroundColor: 'white'
             }}
           >
             <option value="zh-TW">繁體中文</option>
@@ -777,7 +676,7 @@ function Settings() {
         
         <div style={{ 
           padding: '12px 0',
-          borderBottom: '1px solid var(--border-color)',
+          borderBottom: '1px solid #e0e0e0',
           cursor: 'pointer'
         }} onClick={() => console.log('隱私政策')}>
           <div>{texts.settings.about.privacy}</div>
@@ -785,7 +684,7 @@ function Settings() {
         
         <div style={{ 
           padding: '12px 0',
-          borderBottom: '1px solid var(--border-color)',
+          borderBottom: '1px solid #e0e0e0',
           cursor: 'pointer'
         }} onClick={() => console.log('使用條款')}>
           <div>{texts.settings.about.terms}</div>
@@ -793,7 +692,7 @@ function Settings() {
         
         <div style={{ 
           padding: '12px 0',
-          borderBottom: '1px solid var(--border-color)',
+          borderBottom: '1px solid #e0e0e0',
           cursor: 'pointer'
         }} onClick={() => console.log('聯絡我們')}>
           <div>{texts.settings.about.contact}</div>
@@ -803,15 +702,9 @@ function Settings() {
           padding: '12px 0',
           cursor: 'pointer'
         }} onClick={() => console.log('關於 WishHub')}>
-<<<<<<< HEAD
           <div>{texts.settings.about.about}</div>
           <div style={{ color: '#8e8e93', fontSize: '12px' }}>
             {texts.settings.about.version} 1.0.0
-=======
-          <div>關於 WishHub</div>
-          <div style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>
-            版本 1.0.0
->>>>>>> ee3b1abbeb0576ed117d76794f70f7cf5168bc3a
           </div>
         </div>
       </div>

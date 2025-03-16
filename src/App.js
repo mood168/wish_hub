@@ -1,13 +1,8 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { ClerkProvider } from '@clerk/clerk-react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { DatabaseProvider } from './context/DatabaseContext';
-<<<<<<< HEAD
 import { LanguageProvider } from './contexts/LanguageContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-=======
-import { ThemeProvider } from './context/ThemeContext';
->>>>>>> ee3b1abbeb0576ed117d76794f70f7cf5168bc3a
 import BottomNav from './components/BottomNav';
 import FloatingButton from './components/FloatingButton';
 import Home from './pages/Home';
@@ -130,7 +125,6 @@ const AppContent = () => {
   );
 };
 
-<<<<<<< HEAD
 function App() {
   return (
     <DatabaseProvider>
@@ -142,132 +136,6 @@ function App() {
         </LanguageProvider>
       </AuthProvider>
     </DatabaseProvider>
-=======
-// Clerk 公鑰
-const clerkPubKey = 'pk_test_d2VsY29tZS1iZWFnbGUtMjUuY2xlcmsuYWNjb3VudHMuZGV2JA';
-
-// 浮動按鈕包裝組件，根據當前路徑決定是否顯示
-function FloatingButtonWrapper() {
-  const location = useLocation();
-  
-  // 不需要顯示浮動按鈕的頁面路徑列表
-  const hideButtonPaths = ['/settings', '/add-wish', '/login', '/register', '/'];
-  
-  // 檢查當前路徑是否在隱藏列表中
-  const shouldShow = !hideButtonPaths.includes(location.pathname) && 
-                     !location.pathname.startsWith('/plan/');
-  
-  return shouldShow ? <FloatingButton /> : null;
-}
-
-// 受保護的路由組件
-function ProtectedRoute({ children }) {
-  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-  if (!isLoggedIn) {
-    return <Navigate to="/login" />;
-  }
-  return children;
-}
-
-// 主應用佈局組件
-function AppLayout() {
-  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-  
-  return (
-    <div className="app-container">
-      <div className="content-container">
-        <Routes>
-          {/* 歡迎頁面作為默認路由 */}
-          <Route path="/" element={<Welcome />} />
-          
-          {/* 登入和註冊頁面 */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          
-          {/* 受保護的路由 */}
-          <Route path="/home" element={
-            <ProtectedRoute>
-              <Home />
-            </ProtectedRoute>
-          } />
-          <Route path="/wishlist" element={
-            <ProtectedRoute>
-              <Wishlist />
-            </ProtectedRoute>
-          } />
-          <Route path="/community" element={
-            <ProtectedRoute>
-              <Community />
-            </ProtectedRoute>
-          } />
-          <Route path="/notifications" element={
-            <ProtectedRoute>
-              <Notifications />
-            </ProtectedRoute>
-          } />
-          <Route path="/settings" element={
-            <ProtectedRoute>
-              <Settings />
-            </ProtectedRoute>
-          } />
-          <Route path="/wish-detail/:wishId" element={
-            <ProtectedRoute>
-              <WishDetail />
-            </ProtectedRoute>
-          } />
-          <Route path="/add-wish" element={
-            <ProtectedRoute>
-              <AddWish />
-            </ProtectedRoute>
-          } />
-          <Route path="/plan/:wishId" element={
-            <ProtectedRoute>
-              <Plan />
-            </ProtectedRoute>
-          } />
-          
-          {/* 未匹配的路由重定向到歡迎頁面 */}
-          <Route path="*" element={<Navigate to="/" />} />
-        </Routes>
-      </div>
-      
-      {/* 只在登入後顯示底部導航和浮動按鈕 */}
-      {isLoggedIn && (
-        <>
-          <BottomNav />
-          <FloatingButtonWrapper />
-        </>
-      )}
-    </div>
-  );
-}
-
-function App() {
-  // 獲取 Clerk 配置
-  const clerkConfig = window.clerkConfig || {
-    afterSignInUrl: '/home',
-    afterSignUpUrl: '/home',
-    signInUrl: '/login',
-    signUpUrl: '/register'
-  };
-  
-  return (
-    <ClerkProvider 
-      publishableKey={clerkPubKey}
-      navigate={(to) => window.location.href = `${window.location.origin}/wish_hub${to}`}
-      routing="path"
-      afterSignInUrl={clerkConfig.afterSignInUrl}
-      afterSignUpUrl={clerkConfig.afterSignUpUrl}
-    >
-      <DatabaseProvider>
-        <ThemeProvider>
-          <Router basename="/wish_hub">
-            <AppLayout />
-          </Router>
-        </ThemeProvider>
-      </DatabaseProvider>
-    </ClerkProvider>
->>>>>>> ee3b1abbeb0576ed117d76794f70f7cf5168bc3a
   );
 }
 
