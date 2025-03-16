@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDatabase } from '../context/DatabaseContext';
+import { useDatabase } from '../contexts/DatabaseContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useAuth } from '../contexts/AuthContext';
 
 function AddWish() {
   const { wishService, isLoading: dbLoading } = useDatabase();
   const { texts } = useLanguage();
+  const { user } = useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('');
@@ -14,6 +16,7 @@ function AddWish() {
   const [tags, setTags] = useState([]);
   const [tagInput, setTagInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState(null);
   
   const navigate = useNavigate();
 
@@ -31,30 +34,35 @@ function AddWish() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // 檢查用戶是否登入
+    if (!user) {
+      setError('請先登入');
+      return;
+    }
+    
     // 簡單的表單驗證
     if (!title || !description || !category) {
-      alert(texts.addWish.requiredFields);
+      setError(texts.addWish.requiredFields);
       return;
     }
     
     try {
       setIsSubmitting(true);
-      
-      // 從 localStorage 獲取當前用戶 ID
-      // 在實際應用中，這應該從用戶上下文或身份驗證服務中獲取
-      const userId = 1; // 使用示範用戶 ID
+      setError(null);
       
       // 準備願望數據
       const wishData = {
-        userId,
+        userId: user.id,
         title,
         description,
         category: categories.find(cat => cat.id === category)?.name || category,
         visibility: isPublic ? 'public' : 'private',
         dueDate: dueDate || null,
         status: 'notStarted',
-        priority: 'medium', // 預設優先級
+        priority: 'medium',
         tags,
+        createdAt: new Date().toISOString(),
+        progress: 0
       };
       
       // 使用 wishService 儲存願望到 IndexedDB
@@ -66,7 +74,7 @@ function AddWish() {
       navigate('/home');
     } catch (error) {
       console.error('儲存願望時出錯:', error);
-      alert('儲存願望時出錯，請稍後再試');
+      setError('儲存願望時出錯，請稍後再試');
     } finally {
       setIsSubmitting(false);
     }

@@ -4,8 +4,8 @@ import Dexie from 'dexie';
 const db = new Dexie('wishHubDB');
 
 // 定義資料庫結構
-db.version(1).stores({
-  users: '++id, email, username, name, avatar, bio, joinDate, location, website',
+db.version(2).stores({
+  users: '++id, email, username, name, password, avatar, bio, joinDate, location, website, settings',
   wishes: '++id, userId, title, description, category, visibility, createdAt, dueDate, status, priority, progress, *tags',
   steps: '++id, wishId, title, description, completed, dueDate, order',
   wishlists: '++id, userId, name, icon, createdAt',

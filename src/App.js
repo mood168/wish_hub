@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { DatabaseProvider } from './context/DatabaseContext';
+import { DatabaseProvider } from './contexts/DatabaseContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import BottomNav from './components/BottomNav';
@@ -127,15 +127,15 @@ const AppContent = () => {
 
 function App() {
   return (
-    <DatabaseProvider>
-      <AuthProvider>
-        <LanguageProvider>
-          <Router>
+    <Router>
+      <DatabaseProvider>
+        <AuthProvider>
+          <LanguageProvider>
             <AppContent />
-          </Router>
-        </LanguageProvider>
-      </AuthProvider>
-    </DatabaseProvider>
+          </LanguageProvider>
+        </AuthProvider>
+      </DatabaseProvider>
+    </Router>
   );
 }
 

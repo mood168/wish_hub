@@ -9,6 +9,7 @@ import db, {
   notificationService, 
   rewardService 
 } from '../utils/db';
+import { userService as userServiceFromServices } from '../services/userService';
 
 // 創建上下文
 const DatabaseContext = createContext();
@@ -53,7 +54,7 @@ export const DatabaseProvider = ({ children }) => {
     isInitialized,
     isLoading,
     error,
-    userService,
+    userService: userServiceFromServices,
     wishService,
     stepService,
     wishlistService,

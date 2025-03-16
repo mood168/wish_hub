@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useDatabase } from '../context/DatabaseContext';
+import { useDatabase } from '../contexts/DatabaseContext';
 import { useLanguage } from '../contexts/LanguageContext';
 
 function WishDetail() {
@@ -525,10 +525,10 @@ function WishDetail() {
           目標設定
         </button>
         
-            <button 
+        <button 
           className={`tab ${activeTab === 'privacy' ? 'active' : ''}`}
           onClick={() => setActiveTab('privacy')}
-              style={{ 
+          style={{ 
             padding: '10px 15px',
             background: 'none',
             border: 'none',
@@ -544,19 +544,19 @@ function WishDetail() {
         <button 
           className={`tab ${activeTab === 'progress' ? 'active' : ''}`}
           onClick={() => setActiveTab('progress')}
-                style={{ 
+          style={{ 
             padding: '10px 15px',
             background: 'none',
             border: 'none',
             borderBottom: activeTab === 'progress' ? '2px solid var(--primary-color)' : '2px solid transparent',
             color: activeTab === 'progress' ? 'var(--primary-color)' : 'var(--text-secondary)',
             fontWeight: activeTab === 'progress' ? 'bold' : 'normal',
-                  cursor: 'pointer'
-                }}
-              >
+            cursor: 'pointer'
+          }}
+        >
           進度追蹤
         </button>
-              </div>
+      </div>
       
       <div className="tab-content">
         {activeTab === 'details' && (

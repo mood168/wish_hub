@@ -2,7 +2,7 @@
   "name": "wish_hub",
   "version": "0.1.0",
   "private": true,
-  "homepage": "/wish_hub/",
+  "homepage": "https://killtime.com.tw",
   "dependencies": {
     "@clerk/clerk-react": "^5.24.2",
     "@testing-library/jest-dom": "^5.17.0",

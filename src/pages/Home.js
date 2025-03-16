@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDatabase } from '../context/DatabaseContext';
+import { useDatabase } from '../contexts/DatabaseContext';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useAuth } from '../contexts/AuthContext';
 
 function Home() {
   const navigate = useNavigate();
   const { wishService, isLoading: dbLoading } = useDatabase();
   const { texts } = useLanguage();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [wishes, setWishes] = useState([]);
   const [activeTab, setActiveTab] = useState('inProgress');
   const [todayTasks, setTodayTasks] = useState([]);
@@ -36,6 +39,68 @@ function Home() {
   const [notifications, setNotifications] = useState([]);
   const [notificationLoading, setNotificationLoading] = useState(true);
   const [notificationActiveTab, setNotificationActiveTab] = useState('all');
+  
+  // 狀態篩選按鈕樣式
+  const tabButtonStyle = (isActive) => ({
+    padding: '8px 16px',
+    marginRight: '8px',
+    borderRadius: '20px',
+    border: 'none',
+    backgroundColor: isActive ? '#4A90E2' : '#F0F2F5',
+    color: isActive ? 'white' : '#666',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: isActive ? '600' : '400',
+    transition: 'all 0.3s ease',
+    outline: 'none',
+    ':hover': {
+      backgroundColor: isActive ? '#357ABD' : '#E4E6E9'
+    }
+  });
+
+  // 狀態下拉選單樣式
+  const statusDropdownStyle = {
+    padding: '8px 12px',
+    borderRadius: '8px',
+    border: '1px solid #E4E6E9',
+    backgroundColor: 'white',
+    color: '#333',
+    fontSize: '14px',
+    cursor: 'pointer',
+    outline: 'none',
+    appearance: 'none',
+    WebkitAppearance: 'none',
+    MozAppearance: 'none',
+    backgroundImage: 'url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3e%3cpolyline points=\'6 9 12 15 18 9\'%3e%3c/polyline%3e%3c/svg%3e")',
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: 'right 8px center',
+    backgroundSize: '16px',
+    paddingRight: '32px'
+  };
+
+  // 查看詳情按鈕樣式
+  const detailButtonStyle = {
+    padding: '6px 12px',
+    borderRadius: '16px',
+    border: '1px solid #4A90E2',
+    backgroundColor: 'transparent',
+    color: '#4A90E2',
+    fontSize: '12px',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    outline: 'none',
+    ':hover': {
+      backgroundColor: '#4A90E2',
+      color: 'white'
+    }
+  };
+  
+  // 願望狀態文字
+  const wishStatusTexts = {
+    notStarted: '未開始',
+    inProgress: '進行中',
+    completed: '已完成'
+  };
   
   // 獲取用戶資料和設置問候語
   useEffect(() => {
@@ -67,90 +132,41 @@ function Home() {
   useEffect(() => {
     const fetchWishes = async () => {
       try {
-        setLoading(true);
+        if (!user) {
+          navigate('/login');
+          return;
+        }
         
-        // 從 localStorage 獲取當前用戶 ID
-        // 在實際應用中，這應該從用戶上下文或身份驗證服務中獲取
-        const userId = 1; // 使用示範用戶 ID
+        setLoading(true);
+        setError(null);
+        
+        // 檢查 wishService 是否存在
+        if (!wishService) {
+          throw new Error('願望服務未初始化');
+        }
         
         // 從資料庫獲取願望
-        const wishesData = await wishService.getWishes(userId);
+        const wishesData = await wishService.getWishes(user.id);
+        
+        // 檢查返回的數據
+        if (!Array.isArray(wishesData)) {
+          throw new Error('獲取的願望數據格式不正確');
+        }
         
         setWishes(wishesData);
       } catch (error) {
         console.error('獲取願望數據時出錯:', error);
-        // 如果資料庫獲取失敗，使用模擬數據
-        const wishesData = [
-          {
-            id: 101,
-            title: '學習日文 N3 程度',
-            description: '希望能夠在年底前達到日語N3水平，能夠理解日常對話和簡單的日文文章。',
-            category: '學習',
-            progress: 65,
-            dueDate: '2023-12-31',
-            status: 'inProgress',
-            priority: 'high',
-            tags: ['語言學習', '日文', 'JLPT']
-          },
-          {
-            id: 102,
-            title: '每週健身三次',
-            description: '保持健康的生活方式，每週至少去健身房三次，每次至少1小時。',
-            category: '健身',
-            progress: 40,
-            dueDate: '2023-06-30',
-            status: 'inProgress',
-            priority: 'medium',
-            tags: ['健身', '健康']
-          },
-          {
-            id: 103,
-            title: '學習烹飪',
-            description: '學習基本的烹飪技巧，能夠自己做出10道不同的菜餚。',
-            category: '興趣',
-            progress: 100,
-            dueDate: '2023-02-28',
-            status: 'completed',
-            priority: 'low',
-            tags: ['烹飪', '生活技能']
-          },
-          {
-            id: 104,
-            title: '閱讀10本經典文學作品',
-            description: '拓展文學視野，閱讀10本世界經典文學作品。',
-            category: '閱讀',
-            progress: 30,
-            dueDate: '2023-12-31',
-            status: 'inProgress',
-            priority: 'medium',
-            tags: ['閱讀', '文學']
-          },
-          {
-            id: 105,
-            title: '學習攝影基礎',
-            description: '學習攝影的基本技巧，能夠拍出構圖良好的照片。',
-            category: '興趣',
-            progress: 0,
-            dueDate: '2023-09-30',
-            status: 'notStarted',
-            priority: 'low',
-            tags: ['攝影', '藝術']
-          }
-        ];
-        
-        setWishes(wishesData);
+        setError(error.message || '獲取願望數據時出錯，請稍後再試');
       } finally {
         setLoading(false);
       }
     };
     
-    // 當資料庫初始化完成後獲取數據
-    if (!dbLoading) {
+    // 當資料庫初始化完成且用戶已登入後獲取數據
+    if (!dbLoading && user) {
       fetchWishes();
-      fetchTodayTasks();
-      fetchNotifications();
     }
-  }, [wishService, dbLoading]);
+  }, [wishService, dbLoading, user, navigate]);
   
   // 獲取今日待辦任務
   const fetchTodayTasks = () => {
@@ -288,39 +304,49 @@ function Home() {
   };
   
   // 處理快速添加願望
-  const handleQuickAddWish = () => {
-    setShowQuickAddModal(true);
+  const handleQuickAddWish = async () => {
+    if (!quickWishTitle.trim()) {
+      return;
+    }
+    
+    try {
+      const wishData = {
+        userId: user.id,
+        title: quickWishTitle,
+        description: '',
+        category: 'other',
+        visibility: 'private',
+        status: 'notStarted',
+        priority: 'medium',
+        progress: 0,
+        createdAt: new Date().toISOString()
+      };
+      
+      await wishService.createWish(wishData);
+      setQuickWishTitle('');
+      setShowQuickAddModal(false);
+      
+      // 重新獲取願望列表
+      const updatedWishes = await wishService.getWishes(user.id);
+      setWishes(updatedWishes);
+    } catch (error) {
+      console.error('添加願望時出錯:', error);
+      setError('添加願望時出錯，請稍後再試');
+    }
   };
   
-  // 處理提交快速添加願望
-  const handleSubmitQuickWish = () => {
-    if (!quickWishTitle.trim()) return;
-    
-    // 模擬添加新願望
-    console.log('快速添加願望:', quickWishTitle);
-    
-    // 在實際應用中，這裡應該調用 API 添加願望
-    // 然後刷新願望列表
-    
-    // 重置表單並關閉模態框
-    setQuickWishTitle('');
-    setShowQuickAddModal(false);
-    
-    // 顯示成功提示
-    alert('願望已添加！');
-  };
-  
-  // 處理關閉快速添加模態框
-  const handleCloseQuickAddModal = () => {
-    setQuickWishTitle('');
-    setShowQuickAddModal(false);
-  };
-  
-  // 處理任務狀態切換
-  const handleToggleTaskStatus = (taskId) => {
-    setTodayTasks(todayTasks.map(task => 
-      task.id === taskId ? { ...task, completed: !task.completed } : task
-    ));
+  // 處理願望狀態更新
+  const handleWishStatusChange = async (wishId, newStatus) => {
+    try {
+      await wishService.updateWish(wishId, { status: newStatus });
+      
+      // 重新獲取願望列表
+      const updatedWishes = await wishService.getWishes(user.id);
+      setWishes(updatedWishes);
+    } catch (error) {
+      console.error('更新願望狀態時出錯:', error);
+      setError('更新願望狀態時出錯，請稍後再試');
+    }
   };
   
   // 處理通知標籤切換
@@ -608,7 +634,7 @@ function Home() {
             color: 'white',
             fontSize: '12px'
           }}
-          onClick={() => handleToggleTaskStatus(task.id)}
+          onClick={() => handleWishStatusChange(task.wishId, task.completed ? 'notStarted' : 'inProgress')}
         >
           {task.completed && <i className="fas fa-check"></i>}
         </div>
@@ -644,12 +670,12 @@ function Home() {
     </div>
   );
   
-  if (loading || dbLoading) {
-    return (
-      <div className="content-area" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
-        <div className="loading-spinner"></div>
-      </div>
-    );
+  if (loading) {
+    return <div>載入中...</div>;
+  }
+  
+  if (error) {
+    return <div className="error-message">{error}</div>;
   }
   
   return (
@@ -718,7 +744,7 @@ function Home() {
             color: 'white',
             borderRadius: 'var(--radius-md)'
           }}
-          onClick={handleQuickAddWish}
+          onClick={() => setShowQuickAddModal(true)}
         >
           <div style={{ 
             width: '40px', 
@@ -774,36 +800,81 @@ function Home() {
         </div>
       </div>
       
-      {/* 待辦清單 */}
-      <div className="wish-card" style={{ padding: '20px', marginBottom: '20px' }}>
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          marginBottom: '15px'
-        }}>
-          <h3 style={{ margin: 0 }}>{texts.home.todayTasks}</h3>
-          <div style={{ 
-            fontSize: '14px', 
-            color: 'var(--primary-color)',
-            cursor: 'pointer'
+      {/* 狀態篩選按鈕 */}
+      <div style={{ display: 'flex', marginBottom: '20px', overflowX: 'auto', padding: '8px 0' }}>
+        <button
+          style={tabButtonStyle(activeTab === 'all')}
+          onClick={() => handleTabChange('all')}
+        >
+          全部
+        </button>
+        <button
+          style={tabButtonStyle(activeTab === 'notStarted')}
+          onClick={() => handleTabChange('notStarted')}
+        >
+          未開始
+        </button>
+        <button
+          style={tabButtonStyle(activeTab === 'inProgress')}
+          onClick={() => handleTabChange('inProgress')}
+        >
+          進行中
+        </button>
+        <button
+          style={tabButtonStyle(activeTab === 'completed')}
+          onClick={() => handleTabChange('completed')}
+        >
+          已完成
+        </button>
+      </div>
+      
+      {/* 願望列表 */}
+      <div style={{ marginTop: '20px' }}>
+        {filteredWishes.map((wish) => (
+          <div key={wish.id} style={{
+            backgroundColor: 'white',
+            borderRadius: '12px',
+            padding: '16px',
+            marginBottom: '16px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
           }}>
-            {texts.home.seeAll}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <h3 style={{ margin: 0, fontSize: '16px' }}>{wish.title}</h3>
+              <select
+                value={wish.status}
+                onChange={(e) => handleWishStatusChange(wish.id, e.target.value)}
+                style={statusDropdownStyle}
+              >
+                <option value="notStarted">{wishStatusTexts.notStarted}</option>
+                <option value="inProgress">{wishStatusTexts.inProgress}</option>
+                <option value="completed">{wishStatusTexts.completed}</option>
+              </select>
+            </div>
+            
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <span style={{ color: '#666', fontSize: '14px' }}>{wish.category}</span>
+                {wish.tags.map((tag, index) => (
+                  <span key={index} style={{
+                    backgroundColor: '#F0F2F5',
+                    padding: '4px 8px',
+                    borderRadius: '12px',
+                    fontSize: '12px',
+                    color: '#666'
+                  }}>
+                    {tag}
+                  </span>
+                ))}
+              </div>
+              <button
+                onClick={() => handleWishClick(wish.id)}
+                style={detailButtonStyle}
+              >
+                詳細資料
+              </button>
+            </div>
           </div>
-        </div>
-        
-        {todayTasks.length > 0 ? (
-          todayTasks.map(task => renderTaskItem(task))
-        ) : (
-          <div style={{ 
-            padding: '20px', 
-            textAlign: 'center',
-            color: 'var(--text-secondary)'
-          }}>
-            <div style={{ fontSize: '24px', marginBottom: '10px' }}>🎉</div>
-            <div>{texts.home.noTasks}</div>
-          </div>
-        )}
+        ))}
       </div>
       
       {/* 通知部分 */}
@@ -955,57 +1026,29 @@ function Home() {
       
       {/* 快速添加願望模態框 */}
       {showQuickAddModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            width: '90%',
-            maxWidth: '400px',
-            backgroundColor: 'white',
-            borderRadius: 'var(--radius-lg)',
-            padding: '20px',
-            boxShadow: 'var(--shadow-lg)'
-          }}>
-            <h3 style={{ marginTop: 0, marginBottom: '20px' }}>{texts.home.quickAddWish}</h3>
-            
+        <div className="modal">
+          <div className="modal-content">
+            <h3>快速添加願望</h3>
             <input
               type="text"
               value={quickWishTitle}
               onChange={(e) => setQuickWishTitle(e.target.value)}
-              placeholder="輸入您的心願..."
-              style={{
-                width: '100%',
-                padding: '12px',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-color)',
-                marginBottom: '20px',
-                fontSize: '16px'
-              }}
-              autoFocus
+              placeholder="輸入願望標題"
+              className="input-field"
             />
-            
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+            <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'flex-end' }}>
               <button 
-                className="secondary-btn"
-                onClick={handleCloseQuickAddModal}
+                className="text-btn"
+                onClick={() => setShowQuickAddModal(false)}
+                style={{ marginRight: '10px' }}
               >
-                {texts.editProfile.cancel}
+                取消
               </button>
               <button 
                 className="primary-btn"
-                onClick={handleSubmitQuickWish}
-                disabled={!quickWishTitle.trim()}
+                onClick={handleQuickAddWish}
               >
-                {texts.settings.appSettings.save}
+                添加
               </button>
             </div>
           </div>

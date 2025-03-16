@@ -1,15 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useDatabase } from '../context/DatabaseContext';
-import { useSignUp, useUser } from '@clerk/clerk-react';
-import { handleClerkSignUp } from '../utils/clerkUtils';
 import { useAuth } from '../contexts/AuthContext';
 
 function Register() {
   const navigate = useNavigate();
   const { userService } = useDatabase();
-  const { signUp, isLoaded: isSignUpLoaded } = useSignUp();
-  const { user, isLoaded: isUserLoaded } = useUser();
   const { login } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
@@ -20,13 +16,6 @@ function Register() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
-  
-  // 檢查用戶是否已登入
-  useEffect(() => {
-    if (isUserLoaded && user) {
-      navigate('/home');
-    }
-  }, [isUserLoaded, user, navigate]);
   
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -60,7 +49,8 @@ function Register() {
     
     try {
       // 檢查郵箱是否已存在
-      const existingUser = await userService.getUserByEmail(formData.email);
+      const users = await userService.getUsers();
+      const existingUser = users.find(user => user.email === formData.email);
       if (existingUser) {
         throw new Error('該郵箱已被註冊');
       }
@@ -69,8 +59,7 @@ function Register() {
       const newUser = {
         email: formData.email,
         name: formData.name,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        password: formData.password,
         settings: {
           theme: 'light',
           notifications: true,
@@ -87,125 +76,25 @@ function Register() {
       // 設置新用戶標記
       localStorage.setItem('isNewUser', 'true');
       
-      setLoading(false);
-      
       // 導航到引導頁面
       navigate('/onboarding');
       
     } catch (err) {
       console.error('註冊錯誤:', err);
       setError(err.message);
+    } finally {
       setLoading(false);
     }
   };
   
   // 處理 Google 註冊
-  const handleGoogleSignUp = async () => {
-    if (!isSignUpLoaded) return;
-    
-    try {
-      setLoading(true);
-      setError('');
-      
-      await signUp.authenticateWithRedirect({
-        strategy: 'oauth_google',
-        redirectUrl: window.location.origin + (window.clerkConfig?.redirectUrl || '/wish_hub'),
-        redirectUrlComplete: window.location.origin + (window.clerkConfig?.redirectUrlComplete || '/wish_hub/home')
-      });
-      
-      // 這裡不會執行，因為頁面會重定向
-    } catch (err) {
-      console.error('Google 註冊時出錯:', err);
-      setError('Google 註冊時發生錯誤，請稍後再試');
-      setLoading(false);
-    }
+  const handleGoogleSignUp = () => {
+    setError('Google 登入功能尚未開放');
   };
   
   // 處理 Facebook 註冊
-  const handleFacebookSignUp = async () => {
-    if (!isSignUpLoaded) return;
-    
-    try {
-      setLoading(true);
-      setError('');
-      
-      await signUp.authenticateWithRedirect({
-        strategy: 'oauth_facebook',
-        redirectUrl: window.location.origin + (window.clerkConfig?.redirectUrl || '/wish_hub'),
-        redirectUrlComplete: window.location.origin + (window.clerkConfig?.redirectUrlComplete || '/wish_hub/home')
-      });
-      
-      // 這裡不會執行，因為頁面會重定向
-    } catch (err) {
-      console.error('Facebook 註冊時出錯:', err);
-      setError('Facebook 註冊時發生錯誤，請稍後再試');
-      setLoading(false);
-    }
-  };
-  
-  // 處理 Clerk 重定向回調
-  useEffect(() => {
-    async function handleRedirect() {
-      if (!isSignUpLoaded) return;
-      
-      // 檢查是否是從 OAuth 重定向回來的
-      const searchParams = new URLSearchParams(window.location.search);
-      if (searchParams.has('__clerk_status')) {
-        try {
-          console.log('Clerk 狀態:', signUp.status);
-          
-          if (signUp.status === 'complete') {
-            // 獲取用戶資料
-            const userData = signUp.userData;
-            console.log('用戶資料:', userData);
-            
-            // 處理註冊成功
-            const success = await handleClerkSignUp(userData);
-            if (success) {
-              // 直接使用 window.location 進行重定向，避免 React Router 的問題
-              window.location.href = `${window.location.origin}/wish_hub/home`;
-            } else {
-              setError('註冊處理時發生錯誤，請稍後再試');
-            }
-          } else if (signUp.status === 'needs_first_factor') {
-            // 用戶需要完成第一步驗證
-            console.log('需要完成第一步驗證');
-          } else if (signUp.status === 'needs_second_factor') {
-            // 用戶需要完成第二步驗證
-            console.log('需要完成第二步驗證');
-          } else if (signUp.status === 'needs_identifier') {
-            // 用戶需要提供標識符
-            console.log('需要提供標識符');
-          } else if (signUp.status === 'needs_new_password') {
-            // 用戶需要設置新密碼
-            console.log('需要設置新密碼');
-          }
-        } catch (err) {
-          console.error('處理 Clerk 重定向時出錯:', err);
-          setError('註冊處理時發生錯誤，請稍後再試');
-        }
-      }
-    }
-    
-    handleRedirect();
-  }, [isSignUpLoaded, signUp, navigate]);
-  
-  const handleDemoSignup = () => {
-    // 模擬演示註冊
-    setLoading(true);
-    
-    // 模擬API請求延遲
-    setTimeout(() => {
-      // 設置登入狀態
-      localStorage.setItem('isLoggedIn', 'true');
-      localStorage.setItem('userEmail', 'demo@example.com');
-      localStorage.setItem('userName', 'Demo User');
-      
-      setLoading(false);
-      
-      // 導航到引導頁面
-      navigate('/onboarding');
-    }, 1000);
+  const handleFacebookSignUp = () => {
+    setError('Facebook 登入功能尚未開放');
   };
   
   const handleLoginClick = () => {
@@ -238,6 +127,7 @@ function Register() {
             placeholder="姓名"
             value={formData.name}
             onChange={handleChange}
+            required
           />
           
           <input
@@ -247,6 +137,7 @@ function Register() {
             placeholder="電子郵件"
             value={formData.email}
             onChange={handleChange}
+            required
           />
           
           <input
@@ -256,6 +147,7 @@ function Register() {
             placeholder="密碼"
             value={formData.password}
             onChange={handleChange}
+            required
           />
           
           <input
@@ -265,6 +157,7 @@ function Register() {
             placeholder="確認密碼"
             value={formData.confirmPassword}
             onChange={handleChange}
+            required
           />
           
           <div style={{ marginBottom: '20px' }}>
@@ -306,7 +199,7 @@ function Register() {
           <button 
             className="social-login-btn google-btn"
             onClick={handleGoogleSignUp}
-            disabled={loading || !isSignUpLoaded}
+            disabled={loading}
           >
             <i className="fab fa-google"></i>
             使用 Google 註冊
@@ -315,7 +208,7 @@ function Register() {
           <button 
             className="social-login-btn facebook-btn"
             onClick={handleFacebookSignUp}
-            disabled={loading || !isSignUpLoaded}
+            disabled={loading}
           >
             <i className="fab fa-facebook-f"></i>
             使用 Facebook 註冊

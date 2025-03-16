@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { useDatabase } from '../context/DatabaseContext';
+import { useDatabase } from './DatabaseContext';
 
 const AuthContext = createContext();
 
@@ -19,26 +19,50 @@ export const AuthProvider = ({ children }) => {
 
   // 初始化時檢查登入狀態
   useEffect(() => {
-    const checkAuth = () => {
+    const checkAuth = async () => {
       const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+      const isGuest = localStorage.getItem('isGuest') === 'true';
+      
       if (isLoggedIn) {
-        const userEmail = localStorage.getItem('userEmail');
-        const userName = localStorage.getItem('userName');
-        const isGuest = localStorage.getItem('isGuest') === 'true';
-        const storedToken = localStorage.getItem('token');
-        
-        setUser({
-          email: userEmail,
-          name: userName,
-          isGuest: isGuest
-        });
-        setToken(storedToken);
-        setIsAuthenticated(true);
+        if (isGuest) {
+          // 訪客用戶從 localStorage 讀取
+          const userEmail = localStorage.getItem('userEmail');
+          const userName = localStorage.getItem('userName');
+          const storedToken = localStorage.getItem('token');
+          
+          setUser({
+            email: userEmail,
+            name: userName || '訪客用戶',
+            isGuest: true
+          });
+          setToken(storedToken);
+          setIsAuthenticated(true);
+        } else {
+          // 一般用戶從資料庫讀取
+          try {
+            const userEmail = localStorage.getItem('userEmail');
+            const dbUser = await userService.getUserByEmail(userEmail);
+            if (dbUser) {
+              const { password, ...userWithoutPassword } = dbUser;
+              setUser({
+                ...userWithoutPassword,
+                name: dbUser.name || dbUser.email.split('@')[0],
+                isGuest: false
+              });
+              setToken(localStorage.getItem('token'));
+              setIsAuthenticated(true);
+            } else {
+              // 如果用戶不存在，清除登入狀態
+              logout();
+            }
+          } catch (error) {
+            console.error('讀取用戶資料失敗:', error);
+            logout();
+          }
+        }
       } else {
         // 如果沒有登入，清除所有狀態
-        setUser(null);
-        setToken(null);
-        setIsAuthenticated(false);
+        logout();
       }
     };
 
@@ -48,6 +72,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password, isGuest = false) => {
     try {
       if (isGuest) {
+        // 訪客登入使用 localStorage
         const guestUser = {
           id: 'guest_' + Date.now(),
           email: 'guest@example.com',
@@ -57,12 +82,10 @@ export const AuthProvider = ({ children }) => {
         
         const guestToken = 'guest_token_' + Date.now();
         
-        // 先設置狀態
         setUser(guestUser);
         setToken(guestToken);
         setIsAuthenticated(true);
         
-        // 然後保存到 localStorage
         localStorage.setItem('isLoggedIn', 'true');
         localStorage.setItem('userEmail', guestUser.email);
         localStorage.setItem('userName', guestUser.name);
@@ -72,27 +95,28 @@ export const AuthProvider = ({ children }) => {
         return { user: guestUser };
       }
 
-      // 一般用戶登入
-      const existingUser = await userService.getUserByEmail(email);
-      if (!existingUser) {
-        throw new Error('用戶不存在');
+      // 一般用戶登入使用資料庫
+      const dbUser = await userService.getUserByEmail(email);
+      
+      // 驗證密碼
+      if (dbUser.password !== password) {
+        throw new Error('密碼錯誤');
       }
 
-      // 這裡應該要有真實的密碼驗證
-      // 目前為了測試，我們先略過密碼驗證
+      const { password: _, ...userWithoutPassword } = dbUser;
       const user = {
-        ...existingUser,
+        ...userWithoutPassword,
+        name: dbUser.name || email.split('@')[0],
         isGuest: false
       };
       
       const userToken = 'user_token_' + Date.now();
       
-      // 先設置狀態
       setUser(user);
       setToken(userToken);
       setIsAuthenticated(true);
       
-      // 然後保存到 localStorage
+      // 只保存必要的登入狀態到 localStorage
       localStorage.setItem('isLoggedIn', 'true');
       localStorage.setItem('userEmail', user.email);
       localStorage.setItem('userName', user.name);
@@ -107,12 +131,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    // 先清除狀態
     setIsAuthenticated(false);
     setUser(null);
     setToken(null);
-    
-    // 然後清除 localStorage
     localStorage.clear();
   };
 
