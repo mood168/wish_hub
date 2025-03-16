@@ -1,0 +1,103 @@
+/* 淺色模式（默認）變數 */
+:root {
+  --primary-color: #5c6bc0;
+  --primary-color-light: #8e99f3;
+  --primary-color-dark: #26418f;
+  --secondary-color: #ff9800;
+  --secondary-color-light: #ffc947;
+  --secondary-color-dark: #c66900;
+  --success-color: #4caf50;
+  --danger-color: #f44336;
+  --danger-color-light: #ffebee;
+  --warning-color: #ff9800;
+  --info-color: #2196f3;
+  
+  --background-color: #f5f5f5;
+  --card-background: #ffffff;
+  --text-primary: #333333;
+  --text-secondary: #757575;
+  --border-color: #e0e0e0;
+  --divider-color: #eeeeee;
+  
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* 深色模式變數 */
+.dark-theme {
+  --primary-color: #7986cb;
+  --primary-color-light: #aab6fe;
+  --primary-color-dark: #49599a;
+  --secondary-color: #ffb74d;
+  --secondary-color-light: #ffe97d;
+  --secondary-color-dark: #c88719;
+  
+  --background-color: #121212;
+  --card-background: #1e1e1e;
+  --text-primary: #e0e0e0;
+  --text-secondary: #b0b0b0;
+  --border-color: #333333;
+  --divider-color: #2c2c2c;
+  
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* 全局樣式 */
+body {
+  background-color: var(--background-color);
+  color: var(--text-primary);
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.app-container {
+  background-color: var(--background-color);
+  transition: background-color 0.3s;
+}
+
+.content-container {
+  background-color: var(--background-color);
+  transition: background-color 0.3s;
+}
+
+.wish-card {
+  background-color: var(--card-background);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+
+input, textarea, select {
+  background-color: var(--card-background);
+  color: var(--text-primary);
+  border-color: var(--border-color);
+  transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+}
+
+.modal-content {
+  background-color: var(--card-background);
+  color: var(--text-primary);
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* 底部導航欄 */
+.bottom-nav {
+  background-color: var(--card-background);
+  border-top: 1px solid var(--border-color);
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+.bottom-nav-item {
+  color: var(--text-secondary);
+  transition: color 0.3s;
+}
+
+.bottom-nav-item.active {
+  color: var(--primary-color);
+} 
