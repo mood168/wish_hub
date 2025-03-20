@@ -171,6 +171,49 @@ export const wishService = {
       wish.description.toLowerCase().includes(term) ||
       (wish.tags && wish.tags.some(tag => tag.toLowerCase().includes(term)))
     );
+  },
+  
+  // 更新願望進度數據
+  async updateWishProgress(wishId, progressData) {
+    console.log('updateWishProgress called with:', { wishId, progressData });
+    
+    // 獲取當前願望
+    const wish = await db.wishes.get(wishId);
+    if (!wish) {
+      console.error('Wish not found:', wishId);
+      return null;
+    }
+    
+    // 更新願望的進度數據
+    const updatedWish = {
+      ...wish,
+      dailyProgress: progressData.dailyProgress !== undefined ? progressData.dailyProgress : wish.dailyProgress,
+      weeklyProgress: progressData.weeklyProgress !== undefined ? progressData.weeklyProgress : wish.weeklyProgress,
+      updatedAt: new Date().toISOString()
+    };
+    
+    // 儲存更新
+    await db.wishes.update(wishId, updatedWish);
+    console.log('Wish progress updated:', updatedWish);
+    
+    return updatedWish;
+  },
+  
+  // 獲取願望的進度數據
+  async getWishProgress(wishId) {
+    console.log('getWishProgress called with:', wishId);
+    
+    // 獲取當前願望
+    const wish = await db.wishes.get(wishId);
+    if (!wish) {
+      console.error('Wish not found:', wishId);
+      return null;
+    }
+    
+    return {
+      dailyProgress: wish.dailyProgress || {},
+      weeklyProgress: wish.weeklyProgress || {}
+    };
   }
 };
 

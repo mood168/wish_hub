@@ -95,8 +95,6 @@ function Rewards() {
 
   return (
     <div className="content-area">
-      <h2>{texts.rewards.title}</h2>
-      
       {/* 用戶積分卡片 */}
       <div className="wish-card" style={{ padding: '20px', marginBottom: '20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

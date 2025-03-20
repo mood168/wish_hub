@@ -98,6 +98,11 @@ export const AuthProvider = ({ children }) => {
       // 一般用戶登入使用資料庫
       const dbUser = await userService.getUserByEmail(email);
       
+      // 檢查用戶是否存在
+      if (!dbUser) {
+        throw new Error('找不到此用戶');
+      }
+      
       // 驗證密碼
       if (dbUser.password !== password) {
         throw new Error('密碼錯誤');

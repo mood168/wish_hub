@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useDatabase } from '../context/DatabaseContext';
+import { useDatabase } from '../contexts/DatabaseContext';
 import { useAuth } from '../contexts/AuthContext';
+import '../styles/auth.css';
 
 function Register() {
   const navigate = useNavigate();
@@ -28,7 +29,6 @@ function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // 基本驗證
     if (formData.password !== formData.confirmPassword) {
       setError('密碼不匹配');
       return;
@@ -49,13 +49,11 @@ function Register() {
     
     try {
       // 檢查郵箱是否已存在
-      const users = await userService.getUsers();
-      const existingUser = users.find(user => user.email === formData.email);
+      const existingUser = await userService.getUserByEmail(formData.email);
       if (existingUser) {
         throw new Error('該郵箱已被註冊');
       }
       
-      // 創建新用戶
       const newUser = {
         email: formData.email,
         name: formData.name,
@@ -67,16 +65,9 @@ function Register() {
         }
       };
       
-      // 保存用戶到數據庫
-      await userService.createUser(newUser);
-      
-      // 自動登入新用戶
+      await userService.saveUser(newUser);
       await login(formData.email, formData.password);
-      
-      // 設置新用戶標記
       localStorage.setItem('isNewUser', 'true');
-      
-      // 導航到引導頁面
       navigate('/onboarding');
       
     } catch (err) {
@@ -87,44 +78,31 @@ function Register() {
     }
   };
   
-  // 處理 Google 註冊
-  const handleGoogleSignUp = () => {
-    setError('Google 登入功能尚未開放');
-  };
-  
-  // 處理 Facebook 註冊
-  const handleFacebookSignUp = () => {
-    setError('Facebook 登入功能尚未開放');
-  };
-  
   const handleLoginClick = () => {
     navigate('/login');
   };
   
   return (
-    <div className="login-container">
-      <div className="logo-container">
-        <div className="logo-icon">
+    <div className="auth-container">
+      <div className="auth-content">
+        <div className="heart-icon">
           <i className="fas fa-heart"></i>
         </div>
-        <h1 className="app-title" style={{ color: 'var(--primary-color)' }}>Make a Wish</h1>
-      </div>
-      
-      <p className="app-slogan" style={{ color: 'var(--text-secondary)' }}>創建帳戶，開始追蹤您的願望</p>
-      
-      <div className="login-form-container">
+        <h1 className="auth-title">Make a Wish</h1>
+        <p className="auth-subtitle">寫下心願，我們一起實現</p>
+        
         {error && (
-          <div className="error-message">
+          <div className="error-message" style={{ color: 'white', marginBottom: '20px', background: 'rgba(255,0,0,0.2)', padding: '10px', borderRadius: '10px' }}>
             {error}
           </div>
         )}
         
-        <form onSubmit={handleSubmit} className="login-form">
+        <form onSubmit={handleSubmit} className="auth-form">
           <input
             type="text"
             name="name"
-            className="input-field"
-            placeholder="姓名"
+            className="auth-input"
+            placeholder="暱稱"
             value={formData.name}
             onChange={handleChange}
             required
@@ -133,7 +111,7 @@ function Register() {
           <input
             type="email"
             name="email"
-            className="input-field"
+            className="auth-input"
             placeholder="電子郵件"
             value={formData.email}
             onChange={handleChange}
@@ -143,7 +121,7 @@ function Register() {
           <input
             type="password"
             name="password"
-            className="input-field"
+            className="auth-input"
             placeholder="密碼"
             value={formData.password}
             onChange={handleChange}
@@ -153,38 +131,42 @@ function Register() {
           <input
             type="password"
             name="confirmPassword"
-            className="input-field"
+            className="auth-input"
             placeholder="確認密碼"
             value={formData.confirmPassword}
             onChange={handleChange}
             required
           />
           
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              cursor: 'pointer',
-              fontSize: '14px',
-              color: 'var(--text-secondary)'
-            }}>
-              <input
-                type="checkbox"
-                checked={agreeTerms}
-                onChange={(e) => setAgreeTerms(e.target.checked)}
-                style={{ marginRight: '8px' }}
-              />
-              <span>
-                我同意 <Link to="/terms" style={{ color: 'var(--primary-color)', textDecoration: 'none' }}>服務條款</Link> 和 
-                <Link to="/privacy" style={{ color: 'var(--primary-color)', textDecoration: 'none' }}> 隱私政策</Link>
-              </span>
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center',
+            gap: '8px',
+            marginTop: '5px',
+            marginBottom: '10px'
+          }}>
+            <input
+              type="checkbox"
+              id="agreeTerms"
+              checked={agreeTerms}
+              onChange={(e) => setAgreeTerms(e.target.checked)}
+              style={{ margin: 0 }}
+            />
+            <label 
+              htmlFor="agreeTerms" 
+              style={{ 
+                fontSize: '13px',
+                color: 'white',
+                cursor: 'pointer'
+              }}
+            >
+              我同意服務條款和隱私政策
             </label>
           </div>
           
           <button 
             type="submit" 
-            className="primary-btn" 
-            style={{ width: '100%', marginTop: '10px' }}
+            className="auth-button"
             disabled={loading}
           >
             {loading ? '註冊中...' : '註冊'}
@@ -195,29 +177,67 @@ function Register() {
           <span>或</span>
         </div>
         
-        <div className="social-login">
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(2, 1fr)', 
+          gap: '8px',
+          marginBottom: '15px'
+        }}>
           <button 
-            className="social-login-btn google-btn"
-            onClick={handleGoogleSignUp}
+            className="social-auth-button google"
+            onClick={() => setError('Google 註冊功能尚未開放')}
             disabled={loading}
+            style={{ height: '36px', fontSize: '14px' }}
           >
             <i className="fab fa-google"></i>
-            使用 Google 註冊
+            Google
           </button>
           
           <button 
-            className="social-login-btn facebook-btn"
-            onClick={handleFacebookSignUp}
+            className="social-auth-button facebook"
+            onClick={() => setError('Facebook 註冊功能尚未開放')}
             disabled={loading}
+            style={{ height: '36px', fontSize: '14px' }}
           >
             <i className="fab fa-facebook-f"></i>
-            使用 Facebook 註冊
+            Facebook
+          </button>
+
+          <button 
+            className="social-auth-button line"
+            onClick={() => setError('Line 註冊功能尚未開放')}
+            disabled={loading}
+            style={{ height: '36px', fontSize: '14px' }}
+          >
+            <i className="fab fa-line"></i>
+            Line
+          </button>
+
+          <button 
+            className="social-auth-button apple"
+            onClick={() => setError('Apple 註冊功能尚未開放')}
+            disabled={loading}
+            style={{ height: '36px', fontSize: '14px' }}
+          >
+            <i className="fab fa-apple"></i>
+            Apple
           </button>
         </div>
         
-        <p className="login-footer">
-          已有帳戶？ <span className="register-link" onClick={handleLoginClick} style={{ cursor: 'pointer' }}>登入</span>
-        </p>
+        <button 
+          className="auth-button register"
+          onClick={handleLoginClick}
+          disabled={loading}
+          style={{ 
+            width: '100%',
+            height: '40px',
+            backgroundColor: 'transparent',
+            color: 'white',
+            border: '2px solid white'
+          }}
+        >
+          已有帳號？立即登入
+        </button>
       </div>
     </div>
   );

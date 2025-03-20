@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import '../styles/auth.css';
 
 function Login() {
   const navigate = useNavigate();
@@ -17,6 +18,14 @@ function Login() {
       navigate('/home', { replace: true });
     }
   }, [isAuthenticated, navigate, location]);
+  
+  // 設置 body 類別
+  useEffect(() => {
+    document.body.classList.add('login-page');
+    return () => {
+      document.body.classList.remove('login-page');
+    };
+  }, []);
   
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -53,27 +62,24 @@ function Login() {
   };
   
   return (
-    <div className="login-container">
-      <div className="logo-container">
-        <div className="logo-icon">
+    <div className="auth-container">
+      <div className="auth-content">
+        <div className="heart-icon">
           <i className="fas fa-heart"></i>
         </div>
-        <h1 className="app-title" style={{ color: 'var(--primary-color)' }}>Make a Wish</h1>
-      </div>
-      
-      <p className="app-slogan" style={{ color: 'var(--text-secondary)' }}>開始寫下你的心願清單</p>
-      
-      <div className="login-form-container">
+        <h1 className="auth-title">Make a Wish</h1>
+        <p className="auth-subtitle">寫下心願，我們一起實現</p>
+        
         {error && (
-          <div className="error-message">
+          <div className="error-message" style={{ color: 'white', marginBottom: '20px', background: 'rgba(255,0,0,0.2)', padding: '10px', borderRadius: '10px' }}>
             {error}
           </div>
         )}
         
-        <form onSubmit={handleLogin} className="login-form">
+        <form onSubmit={handleLogin} className="auth-form">
           <input
             type="email"
-            className="input-field"
+            className="auth-input"
             placeholder="電子郵件"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -82,7 +88,7 @@ function Login() {
           
           <input
             type="password"
-            className="input-field"
+            className="auth-input"
             placeholder="密碼"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
@@ -91,8 +97,7 @@ function Login() {
           
           <button 
             type="submit" 
-            className="primary-btn" 
-            style={{ width: '100%', marginTop: '10px' }}
+            className="auth-button"
             disabled={loading}
           >
             {loading ? '登入中...' : '登入'}
@@ -103,36 +108,63 @@ function Login() {
           <span>或</span>
         </div>
         
-        <div className="social-login">
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(2, 1fr)', 
+          gap: '8px',
+          marginBottom: '15px'
+        }}>
           <button 
-            className="social-login-btn google-btn"
-            disabled={true}
+            className="social-auth-button google"
+            onClick={() => setError('Google 登入功能尚未開放')}
+            disabled={loading}
+            style={{ height: '36px', fontSize: '14px' }}
           >
             <i className="fab fa-google"></i>
-            使用 Google 登入
+            Google
           </button>
           
           <button 
-            className="social-login-btn facebook-btn"
-            disabled={true}
+            className="social-auth-button facebook"
+            onClick={() => setError('Facebook 登入功能尚未開放')}
+            disabled={loading}
+            style={{ height: '36px', fontSize: '14px' }}
           >
             <i className="fab fa-facebook-f"></i>
-            使用 Facebook 登入
+            Facebook
           </button>
         </div>
         
         <button 
-          className="secondary-btn" 
-          style={{ width: '100%', marginTop: '20px' }}
+          className="auth-button guest"
           onClick={handleGuestLogin}
           disabled={loading}
+          style={{ 
+            marginBottom: '15px',
+            width: '100%',
+            height: '40px',
+            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+            color: 'white',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
+          }}
         >
           使用訪客身分進入
         </button>
         
-        <p className="login-footer">
-          還沒有帳戶？ <span className="register-link" onClick={handleRegisterClick} style={{ cursor: 'pointer' }}>註冊</span>
-        </p>
+        <button 
+          className="auth-button register"
+          onClick={handleRegisterClick}
+          disabled={loading}
+          style={{ 
+            width: '100%',
+            height: '40px',
+            backgroundColor: 'transparent',
+            color: 'white',
+            border: '2px solid white'
+          }}
+        >
+          沒有帳號？馬上註冊
+        </button>
       </div>
     </div>
   );

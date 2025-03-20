@@ -75,35 +75,70 @@ function CreateSupport() {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // 表單驗證
     if (!supportTitle.trim() || !supportDescription.trim() || !supportCategory || !selectedWish) {
       alert('請填寫所有必填欄位並選擇一個心願');
       return;
     }
     
-    // 模擬提交數據
     setLoading(true);
     
-    // 模擬API請求
     setTimeout(() => {
       setLoading(false);
-      
-      // 提交成功後導航回社群頁面
       alert('支援請求創建成功！');
-      navigate('/community');
+      navigate('/home');
     }, 1000);
   };
   
   return (
-    <div className="content-area">
-      <h2>發起心願支援</h2>
-      
-      <div className="wish-card" style={{ padding: '20px', marginBottom: '20px' }}>
+    <div className="content-area" style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
+      {/* 移動按鈕到頁面上方 */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'flex-end', 
+        gap: '12px',
+        marginBottom: '20px'
+      }}>
+        <button
+          type="button"
+          onClick={() => navigate('/home')}
+          style={{ 
+            padding: '12px 24px',
+            borderRadius: '8px',
+            border: '1px solid var(--primary-color)',
+            backgroundColor: 'white',
+            color: 'var(--primary-color)',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            cursor: 'pointer'
+          }}
+        >
+          取消
+        </button>
+        <button
+          onClick={handleSubmit}
+          disabled={loading}
+          style={{ 
+            padding: '12px 24px',
+            borderRadius: '8px',
+            border: 'none',
+            backgroundColor: 'var(--primary-color)',
+            color: 'white',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            opacity: loading ? 0.7 : 1
+          }}
+        >
+          {loading ? '發布中...' : '發布支援請求'}
+        </button>
+      </div>
+
+      <div className="wish-card" style={{ padding: '20px', marginBottom: '20px', backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
         <p style={{ marginBottom: '20px', color: 'var(--text-secondary)' }}>
           尋求社群中其他用戶的幫助，獲取建議、資源或找到志同道合的夥伴，一起實現你的心願！
         </p>
         
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={(e) => e.preventDefault()}>
           {/* 選擇心願 */}
           <div style={{ marginBottom: '20px' }}>
             <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
@@ -234,43 +269,6 @@ function CreateSupport() {
                 </option>
               ))}
             </select>
-          </div>
-          
-          {/* 提交按鈕 */}
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <button
-              type="button"
-              onClick={() => navigate('/wishlist')}
-              style={{ 
-                padding: '12px 20px',
-                borderRadius: '8px',
-                border: '1px solid var(--primary-color)',
-                backgroundColor: 'white',
-                color: 'var(--primary-color)',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                cursor: 'pointer'
-              }}
-            >
-              取消
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              style={{ 
-                padding: '12px 20px',
-                borderRadius: '8px',
-                border: 'none',
-                backgroundColor: 'var(--primary-color)',
-                color: 'white',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.7 : 1
-              }}
-            >
-              {loading ? '發布中...' : '發布支援請求'}
-            </button>
           </div>
         </form>
       </div>

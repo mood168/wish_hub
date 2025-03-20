@@ -49,35 +49,70 @@ function CreateChallenge() {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // 表單驗證
     if (!challengeTitle.trim() || !challengeDescription.trim() || !challengeCategory) {
       alert('請填寫所有必填欄位');
       return;
     }
     
-    // 模擬提交數據
     setLoading(true);
     
-    // 模擬API請求
     setTimeout(() => {
       setLoading(false);
-      
-      // 提交成功後導航回社群頁面
       alert('挑戰創建成功！');
-      navigate('/community');
+      navigate('/home');
     }, 1000);
   };
   
   return (
-    <div className="content-area">
-      <h2>發起心願挑戰</h2>
+    <div className="content-area" style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
+      {/* 移動按鈕到頁面上方 */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'flex-end', 
+        gap: '12px',
+        marginBottom: '20px'
+      }}>
+        <button
+          type="button"
+          onClick={() => navigate('/home')}
+          style={{ 
+            padding: '12px 24px',
+            borderRadius: '8px',
+            border: '1px solid var(--primary-color)',
+            backgroundColor: 'white',
+            color: 'var(--primary-color)',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            cursor: 'pointer'
+          }}
+        >
+          取消
+        </button>
+        <button
+          onClick={handleSubmit}
+          disabled={loading}
+          style={{ 
+            padding: '12px 24px',
+            borderRadius: '8px',
+            border: 'none',
+            backgroundColor: 'var(--primary-color)',
+            color: 'white',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            opacity: loading ? 0.7 : 1
+          }}
+        >
+          {loading ? '創建中...' : '創建挑戰'}
+        </button>
+      </div>
       
-      <div className="wish-card" style={{ padding: '20px', marginBottom: '20px' }}>
+      <div className="wish-card" style={{ padding: '20px', marginBottom: '20px', backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
         <p style={{ marginBottom: '20px', color: 'var(--text-secondary)' }}>
           創建一個挑戰，邀請其他人一起完成你的心願目標。設定明確的時間和目標，讓更多人參與進來！
         </p>
         
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={(e) => e.preventDefault()}>
           {/* 挑戰標題 */}
           <div style={{ marginBottom: '20px' }}>
             <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
@@ -93,7 +128,8 @@ function CreateChallenge() {
                 padding: '12px',
                 borderRadius: '8px',
                 border: '1px solid #e0e0e0',
-                fontSize: '16px'
+                fontSize: '16px',
+                boxSizing: 'border-box'
               }}
               required
             />
@@ -115,7 +151,9 @@ function CreateChallenge() {
                 border: '1px solid #e0e0e0',
                 fontSize: '16px',
                 minHeight: '120px',
-                resize: 'vertical'
+                resize: 'vertical',
+                boxSizing: 'border-box',
+                maxHeight: '300px'
               }}
               required
             />
@@ -135,7 +173,8 @@ function CreateChallenge() {
                 borderRadius: '8px',
                 border: '1px solid #e0e0e0',
                 fontSize: '16px',
-                backgroundColor: 'white'
+                backgroundColor: 'white',
+                boxSizing: 'border-box'
               }}
               required
             >
@@ -181,7 +220,8 @@ function CreateChallenge() {
                   border: '1px solid #e0e0e0',
                   fontSize: '16px',
                   textAlign: 'center',
-                  margin: '0 10px'
+                  margin: '0 10px',
+                  boxSizing: 'border-box'
                 }}
               />
               <button
@@ -236,7 +276,7 @@ function CreateChallenge() {
           </div>
           
           {/* 關聯心願（可選） */}
-          <div style={{ marginBottom: '30px' }}>
+          <div style={{ marginBottom: '20px' }}>
             <label style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold' }}>
               關聯到我的心願（可選）
             </label>
@@ -249,7 +289,8 @@ function CreateChallenge() {
                 borderRadius: '8px',
                 border: '1px solid #e0e0e0',
                 fontSize: '16px',
-                backgroundColor: 'white'
+                backgroundColor: 'white',
+                boxSizing: 'border-box'
               }}
             >
               <option value="">不關聯心願</option>
@@ -262,43 +303,6 @@ function CreateChallenge() {
             <div style={{ fontSize: '14px', color: 'var(--text-secondary)', marginTop: '8px' }}>
               關聯心願後，挑戰進度將與心願進度同步
             </div>
-          </div>
-          
-          {/* 提交按鈕 */}
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <button
-              type="button"
-              onClick={() => navigate('/wishlist')}
-              style={{ 
-                padding: '12px 20px',
-                borderRadius: '8px',
-                border: '1px solid var(--primary-color)',
-                backgroundColor: 'white',
-                color: 'var(--primary-color)',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                cursor: 'pointer'
-              }}
-            >
-              取消
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              style={{ 
-                padding: '12px 20px',
-                borderRadius: '8px',
-                border: 'none',
-                backgroundColor: 'var(--primary-color)',
-                color: 'white',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                cursor: loading ? 'not-allowed' : 'pointer',
-                opacity: loading ? 0.7 : 1
-              }}
-            >
-              {loading ? '創建中...' : '創建挑戰'}
-            </button>
           </div>
         </form>
       </div>

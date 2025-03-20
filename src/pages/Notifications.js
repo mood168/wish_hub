@@ -163,11 +163,10 @@ function Notifications() {
     <div className="content-area">
       <div style={{ 
         display: 'flex', 
-        justifyContent: 'space-between', 
+        justifyContent: 'flex-end', 
         alignItems: 'center',
         marginBottom: '20px'
       }}>
-        <h2 style={{ margin: 0 }}>{texts.notifications.title}</h2>
         {unreadCount > 0 && (
           <button 
             className="text-btn" 

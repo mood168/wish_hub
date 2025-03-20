@@ -621,44 +621,6 @@ function Community() {
   
   return (
     <div className="content-area">
-      <h2>{texts.communityPage.title}</h2>
-      
-      {/* 搜索欄 */}
-      <div style={{ 
-        display: 'flex', 
-        marginBottom: '20px',
-        position: 'relative'
-      }}>
-          <input
-            type="text"
-            value={searchQuery}
-          onChange={handleSearch}
-          placeholder={texts.communityPage.searchPlaceholder}
-            style={{ 
-              flex: 1,
-            padding: '10px 15px',
-              borderRadius: '20px',
-              border: '1px solid #e0e0e0',
-            fontSize: '16px'
-            }}
-          />
-          <button 
-          style={{ 
-            position: 'absolute',
-            right: '15px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            background: 'none',
-            border: 'none',
-            fontSize: '16px',
-            cursor: 'pointer'
-          }}
-          onClick={() => handleTabChange('search')}
-        >
-          🔍
-          </button>
-        </div>
-      
       {/* 篩選按鈕 */}
       <div style={{ 
         display: 'flex', 
@@ -751,44 +713,45 @@ function Community() {
             flex: '1',
             margin: '0 5px'
           }}
-          onClick={() => {
-            handleFilterChange('following');
-            handleTabChange('following');
-          }}
+          onClick={() => handleFilterChange('following')}
         >
-          關注
+          追蹤
         </button>
+      </div>
+
+      {/* 搜索欄 */}
+      <div style={{ 
+        display: 'flex', 
+        marginBottom: '20px',
+        position: 'relative'
+      }}>
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={handleSearch}
+          placeholder={texts.communityPage.searchPlaceholder}
+          style={{ 
+            flex: 1,
+            padding: '10px 15px',
+            borderRadius: '20px',
+            border: '1px solid #e0e0e0',
+            fontSize: '16px'
+          }}
+        />
         <button 
           style={{ 
-            padding: '8px 15px',
-            borderRadius: '20px',
+            position: 'absolute',
+            right: '15px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            background: 'none',
             border: 'none',
-            backgroundColor: filterType === 'challenges' ? 'var(--primary-color)' : '#f2f2f7',
-            color: filterType === 'challenges' ? 'white' : 'var(--text-primary)',
-            fontSize: '14px',
-            cursor: 'pointer',
-            flex: '1',
-            margin: '0 5px'
+            fontSize: '16px',
+            cursor: 'pointer'
           }}
-          onClick={() => handleFilterChange('challenges')}
+          onClick={() => handleTabChange('search')}
         >
-          挑戰
-        </button>
-        <button 
-          style={{ 
-            padding: '8px 15px',
-            borderRadius: '20px',
-            border: 'none',
-            backgroundColor: filterType === 'support' ? 'var(--primary-color)' : '#f2f2f7',
-            color: filterType === 'support' ? 'white' : 'var(--text-primary)',
-            fontSize: '14px',
-            cursor: 'pointer',
-            flex: '1',
-            margin: '0 5px'
-          }}
-          onClick={() => handleFilterChange('support')}
-        >
-          支援
+          🔍
         </button>
       </div>
       

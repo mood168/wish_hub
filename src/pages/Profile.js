@@ -127,7 +127,6 @@ function Profile() {
           alignItems: 'center',
           marginBottom: '20px'
         }}>
-          <h2 style={{ margin: 0 }}>個人資料</h2>
           <div>
             <button 
               className="primary-btn" 

@@ -1,4 +1,16 @@
 /* 全局樣式 */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+* {
+  box-sizing: border-box;
+}
+
 :root {
   --primary-color: #5271FF;
   --primary-light: #7A90FF;
@@ -70,10 +82,12 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   display: flex;
-  justify-content: center;
-  align-items: center;
+  justify-content: flex-start; /* 改為頂部對齊 */
+  align-items: flex-start; /* 改為頂部對齊 */
   min-height: 100vh;
+  height: 100vh;
   overflow: hidden;
+  position: relative;
 }
 
 code {
@@ -89,6 +103,8 @@ code {
   position: relative;
   max-width: 100%;
   max-height: 100%;
+  padding: 0;
+  margin: 0;
 }
 
 /* 模擬 iPhone 15 Pro 的動態島 */
@@ -107,14 +123,15 @@ code {
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 70px;
+  height: 60px; /* 稍微減少高度 */
   background-color: var(--card-color);
   display: flex;
   justify-content: space-around;
   align-items: center;
   box-shadow: 0 -1px 0 rgba(0, 0, 0, 0.1);
   z-index: 100;
-  padding-bottom: calc(var(--iphone-15-pro-home-indicator-height) + 5px); /* 減少底部內邊距 */
+  padding-bottom: 0; /* 移除底部內邊距 */
+  margin: 0;
 }
 
 @media (min-width: 393px) {
@@ -124,7 +141,7 @@ code {
     transform: translateX(-50%);
     border-bottom-left-radius: var(--iphone-15-pro-radius);
     border-bottom-right-radius: var(--iphone-15-pro-radius);
-    bottom: 5px; /* 調整底部位置，確保不會超過指示條 */
+    bottom: 0; /* 調整底部位置 */
   }
 }
 
@@ -145,19 +162,19 @@ code {
 }
 
 .bottom-nav a[data-target="home-iframe"] i {
-  transform: scale(1.026);
+  transform: scale(1);
   background: linear-gradient(145deg, var(--primary-color), var(--primary-dark));
   color: white;
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   display: flex;
   justify-content: center;
   align-items: center;
   margin-bottom: 2px;
-  box-shadow: 0 4px 8px rgba(82, 113, 255, 0.3), 
-              inset 0 -2px 5px rgba(0, 0, 0, 0.1),
-              inset 0 2px 5px rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 6px rgba(82, 113, 255, 0.3), 
+              inset 0 -1px 3px rgba(0, 0, 0, 0.1),
+              inset 0 1px 3px rgba(255, 255, 255, 0.3);
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   position: relative;
   overflow: hidden;
@@ -180,20 +197,20 @@ code {
 }
 
 .bottom-nav a:nth-child(3) {
-  margin-top: -10px; /* 調整上邊距，使首頁按鈕（現在是第三個）不要突出太多 */
+  margin-top: -5px; /* 減少上邊距 */
 }
 
 .bottom-nav a:not(:nth-child(3)) i {
-  transform: scale(0.9); /* 其他圖標縮小10% */
+  transform: scale(0.85); /* 其他圖標縮小更多 */
 }
 
 .bottom-nav i {
-  font-size: 22px; /* 稍微縮小圖標大小 */
-  margin-bottom: 4px;
+  font-size: 18px; /* 進一步縮小圖標大小 */
+  margin-bottom: 2px;
 }
 
 .bottom-nav span {
-  font-size: 9px; /* 稍微縮小文字大小 */
+  font-size: 8px; /* 更小的文字大小 */
 }
 
 /* 內容區域 */
@@ -202,14 +219,27 @@ code {
   overflow: hidden;
   height: 100%;
   padding: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  margin: 0;
   box-sizing: border-box;
+  background-color: var(--background-color);
 }
 
 .content-area {
-  height: 100%; /* 使用100%高度 */
+  padding: 16px;
+  padding-top: 0; /* 移除頂部內邊距 */
+  padding-bottom: 70px !important; /* 確保底部有足夠空間 */
+  border-radius: var(--radius-lg);
   overflow-y: auto;
-  padding: 20px;
-  padding-bottom: calc(70px + var(--iphone-15-pro-home-indicator-height) + 15px); /* 調整底部內邊距，確保內容不被底部導航欄遮擋 */
+  height: 100%;
+  /* 隱藏滾動條但保留功能 */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.content-area::-webkit-scrollbar {
+  display: none;
 }
 
 /* 卡片樣式 */
@@ -409,10 +439,10 @@ code {
 /* 浮動按鈕 */
 .floating-btn {
   position: fixed;
-  bottom: 80px;
+  bottom: 90px; /* 增加底部距離 */
   right: 20px;
-  width: 60px;
-  height: 60px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%; /* 完全圓形的浮動按鈕 */
   background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
   color: white;
@@ -499,8 +529,15 @@ code {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  padding: 0;
+  margin: 0;
   height: 100%;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background: linear-gradient(135deg, #f8f9fd 0%, #e2e7fd 100%);
 }
 
@@ -717,9 +754,30 @@ code {
 
 /* 響應式設計 */
 @media (min-width: 393px) {
+  body.login-page {
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+  }
+  
+  .login-page .app-container,
+  .login-page .content-container,
+  .login-page .content-area,
+  .login-page .iphone-simulator {
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    height: 100vh;
+    width: 100%;
+  }
+  
   body {
     background-color: #ffffff; /* 將背景色改為白色 */
-    padding: 20px;
+    padding: 0; /* 移除填充 */
+  }
+  
+  .iphone-simulator {
+    background-color: #ffffff; /* 將背景色改為白色 */
   }
   
   .app-container {
@@ -734,6 +792,7 @@ code {
     position: relative;
     border: none;
     box-sizing: content-box;
+    padding: 0;
   }
   
   .dark-mode .app-container {
@@ -741,15 +800,17 @@ code {
   }
   
   .content-container {
-    border-radius: 0;
+    border-radius: var(--iphone-15-pro-radius);
     overflow: hidden;
     height: 100%;
-    padding: 0;
+    padding-top: 0;
+    padding-bottom: 0;
     box-sizing: border-box;
   }
   
   .content-area {
     padding: 16px;
+    padding-bottom: 70px !important; /* 確保底部有足夠空間 */
     border-radius: var(--radius-lg);
     overflow-y: auto;
     height: 100%;
@@ -764,14 +825,20 @@ code {
 }
 
 @media (max-width: 392px) {
+  .iphone-simulator {
+    padding: 0;
+  }
+  
   .app-container {
     width: 100%;
     height: 100vh;
     border-radius: 0;
+    border: none;
   }
   
   .content-area {
     padding: 16px;
+    padding-bottom: 70px !important; /* 確保底部有足夠空間 */
   }
 }
 
@@ -971,12 +1038,19 @@ code {
 .iphone-simulator {
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start; /* 改為頂部對齊 */
   width: 100%;
   height: 100vh;
   padding: 0;
+  margin: 0;
   box-sizing: border-box;
   background-color: #ffffff; /* 將背景色改為白色 */
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden; /* 防止內容溢出 */
 }
 
 /* 響應式設計 */
@@ -997,6 +1071,7 @@ code {
     position: relative;
     border: none;
     box-sizing: content-box;
+    padding: 0;
   }
   
   .dark-mode .app-container {
@@ -1007,13 +1082,14 @@ code {
     border-radius: var(--iphone-15-pro-radius);
     overflow: hidden;
     height: 100%;
-    padding-top: var(--iphone-15-pro-notch-height);
-    padding-bottom: calc(var(--iphone-15-pro-home-indicator-height) + 8px);
+    padding-top: 0;
+    padding-bottom: 0;
     box-sizing: border-box;
   }
   
   .content-area {
     padding: 16px;
+    padding-bottom: 70px !important; /* 確保底部有足夠空間 */
     border-radius: var(--radius-lg);
     overflow-y: auto;
     height: 100%;
@@ -1041,6 +1117,7 @@ code {
   
   .content-area {
     padding: 16px;
+    padding-bottom: 70px !important; /* 確保底部有足夠空間 */
   }
 }
 

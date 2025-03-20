@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDatabase } from '../contexts/DatabaseContext';
+import '../styles/auth.css';
 
 function Welcome() {
   const navigate = useNavigate();
@@ -37,15 +38,13 @@ function Welcome() {
   }, [navigate, isLoading]);
 
   return (
-    <div className="welcome-container">
-      <div className={`welcome-content ${animationComplete ? 'fade-out' : 'fade-in'}`}>
-        <div className="logo-container">
-          <div className="logo-icon">
-            <i className="fas fa-heart"></i>
-          </div>
-          <h1 className="app-title">Make a Wish</h1>
+    <div className="auth-container">
+      <div className={`auth-content ${animationComplete ? 'fade-out' : 'fade-in'}`}>
+        <div className="heart-icon">
+          <i className="fas fa-heart"></i>
         </div>
-        <p className="app-slogan">開始寫下你的心願清單</p>
+        <h1 className="auth-title">Make a Wish</h1>
+        <p className="auth-subtitle">寫下願望，我們一起實現</p>
         <div className="loading-dots">
           <span></span>
           <span></span>

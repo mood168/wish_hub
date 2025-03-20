@@ -1,15 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 function Onboarding() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
   const [interests, setInterests] = useState([]);
+  const [animationComplete, setAnimationComplete] = useState(false);
   
+  useEffect(() => {
+    // 第一步驟5秒後自動跳轉
+    if (currentStep === 0) {
+      const timer = setTimeout(() => {
+        setAnimationComplete(true);
+        setTimeout(() => {
+          setCurrentStep(1);
+          setAnimationComplete(false);
+        }, 500);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [currentStep]);
+
   const steps = [
     {
-      title: '歡迎使用 Make a Wish',
-      description: '在這裡，你可以記錄、分享和實現你的願望',
+      title: 'Make a Wish',
+      description: '寫下願望，我們一起實現',
       type: 'welcome'
     },
     {
@@ -33,17 +48,14 @@ function Onboarding() {
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      // 完成引導流程，導航到社群頁面
-      // 儲存用戶興趣到 localStorage
       localStorage.setItem('userInterests', JSON.stringify(interests));
-      localStorage.removeItem('isNewUser'); // 移除新用戶標記
+      localStorage.removeItem('isNewUser');
       navigate('/community');
     }
   };
   
   const handleSkip = () => {
-    // 跳過引導流程，直接導航到社群頁面
-    localStorage.removeItem('isNewUser'); // 移除新用戶標記
+    localStorage.removeItem('isNewUser');
     navigate('/community');
   };
   
@@ -61,12 +73,17 @@ function Onboarding() {
     switch (step.type) {
       case 'welcome':
         return (
-          <div className="onboarding-content welcome">
-            <div className="emoji-icon">🌟</div>
-            <p className="description">
-              在這裡，你可以記錄、分享和實現你的願望。無論是旅行、學習新技能還是財務目標，我們都能幫助您一步步實現。
-            </p>
-            <div className="emoji-illustration">✨🚀🌈</div>
+          <div className={`auth-content ${animationComplete ? 'fade-out' : 'fade-in'}`}>
+            <div className="heart-icon">
+              <i className="fas fa-heart"></i>
+            </div>
+            <h1 className="auth-title">{step.title}</h1>
+            <p className="auth-subtitle">{step.description}</p>
+            <div className="loading-dots">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
           </div>
         );
         
@@ -97,45 +114,46 @@ function Onboarding() {
   };
   
   return (
-    <div className="content-area">
-      <div className="onboarding-container">
-        <div className="progress-container">
-          {steps.map((_, index) => (
-            <div
-              key={index}
-              className={`progress-step ${index <= currentStep ? 'active' : ''}`}
-              style={{ flex: 1, marginRight: index < steps.length - 1 ? '5px' : 0 }}
-            />
-          ))}
-        </div>
-        
-        <div className="onboarding-header">
-          <h1 className="title">{steps[currentStep].title}</h1>
-          <p className="subtitle">{steps[currentStep].description}</p>
-        </div>
-        
-        {renderStepContent()}
-        
-        <div className="onboarding-actions">
-          {currentStep < steps.length - 1 ? (
+    <div className="auth-container">
+      {currentStep === 1 && (
+        <div className="onboarding-container">
+          <div className="progress-container">
+            {steps.map((_, index) => (
+              <div
+                key={index}
+                className={`progress-step ${index <= currentStep ? 'active' : ''}`}
+                style={{ flex: 1, marginRight: index < steps.length - 1 ? '5px' : 0 }}
+              />
+            ))}
+          </div>
+          
+          <div className="onboarding-header">
+            <h1 className="title">{steps[currentStep].title}</h1>
+            <p className="subtitle">{steps[currentStep].description}</p>
+          </div>
+          
+          {renderStepContent()}
+          
+          <div className="onboarding-actions">
             <button
               onClick={handleSkip}
               className="secondary-btn"
             >
               跳過
             </button>
-          ) : (
-            <div></div>
-          )}
-          
-          <button
-            onClick={handleNext}
-            className="primary-btn"
-          >
-            {currentStep < steps.length - 1 ? '下一步' : '開始使用'}
-          </button>
+            
+            <button
+              onClick={handleNext}
+              className="primary-btn"
+              disabled={currentStep === 1 && interests.length === 0}
+            >
+              {currentStep < steps.length - 1 ? '下一步' : '開始使用'}
+            </button>
+          </div>
         </div>
-      </div>
+      )}
+      
+      {currentStep === 0 && renderStepContent()}
     </div>
   );
 }

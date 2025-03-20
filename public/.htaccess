@@ -1,0 +1,15 @@
+# 啟用重寫引擎
+RewriteEngine On
+
+# 設置重寫基礎
+RewriteBase /
+
+# 如果請求的是存在的文件或目錄，則直接使用
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+
+# 將所有非文件/目錄請求重定向到 index.html
+RewriteRule ^ index.html [L]
+
+# 設置錯誤頁面
+ErrorDocument 404 /index.html 

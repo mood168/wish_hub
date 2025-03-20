@@ -234,8 +234,6 @@ function Settings() {
 
   return (
     <div className="content-area">
-      <h2>{texts.settings.title}</h2>
-      
       {/* 用戶資料 */}
       <div className="wish-card" style={{ padding: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'center' }}>

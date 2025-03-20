@@ -1,10 +1,12 @@
 import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useNotification } from '../contexts/NotificationContext';
 
 function BottomNav() {
   const location = useLocation();
   const { texts } = useLanguage();
+  const { unreadCount } = useNotification();
   
   // 檢查當前路徑是否匹配
   const isActive = (path) => {
@@ -13,9 +15,16 @@ function BottomNav() {
 
   return (
     <div className="bottom-nav">
-      <NavLink to="/wishlist" className={isActive('/wishlist') ? 'active' : ''}>
-        <i className="fas fa-list-alt"></i>
-        <span>{texts.nav.wishlist}</span>
+      <NavLink to="/notifications" className={isActive('/notifications') ? 'active' : ''}>
+        <div className="nav-icon-container">
+          <i className="fas fa-bell"></i>
+          {unreadCount > 0 && (
+            <span className="notification-badge">
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
+          )}
+        </div>
+        <span>{texts.nav.notifications}</span>
       </NavLink>
       <NavLink to="/community" className={isActive('/community') ? 'active' : ''}>
         <i className="fas fa-users"></i>

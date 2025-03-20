@@ -12,7 +12,7 @@ function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [wishes, setWishes] = useState([]);
-  const [activeTab, setActiveTab] = useState('inProgress');
+  const [activeTab, setActiveTab] = useState('all');
   const [todayTasks, setTodayTasks] = useState([]);
   const [showQuickAddModal, setShowQuickAddModal] = useState(false);
   const [quickWishTitle, setQuickWishTitle] = useState('');
@@ -20,6 +20,10 @@ function Home() {
   const [userAvatar, setUserAvatar] = useState('');
   const [greeting, setGreeting] = useState('');
   const [memberLevel, setMemberLevel] = useState('regular');
+  
+  // 添加調試日誌
+  console.log('Language texts:', texts);
+  console.log('Home texts:', texts.home);
   
   // 通知相關文字
   const notificationTexts = {
@@ -101,6 +105,10 @@ function Home() {
     inProgress: '進行中',
     completed: '已完成'
   };
+  
+  // 每日待辦進度相關狀態
+  const [dailyTasks, setDailyTasks] = useState([]);
+  const [isLoadingTasks, setIsLoadingTasks] = useState(true);
   
   // 獲取用戶資料和設置問候語
   useEffect(() => {
@@ -282,6 +290,24 @@ function Home() {
       setNotificationLoading(false);
     }, 500);
   };
+  
+  // 獲取當日待辦進度
+  useEffect(() => {
+    const fetchDailyTasks = async () => {
+      try {
+        setIsLoadingTasks(true);
+        // TODO: 從資料庫獲取當日待辦進度
+        const tasks = await wishService.getDailyTasks();
+        setDailyTasks(tasks);
+      } catch (error) {
+        console.error('獲取每日待辦進度失敗:', error);
+      } finally {
+        setIsLoadingTasks(false);
+      }
+    };
+
+    fetchDailyTasks();
+  }, []);
   
   // 處理標籤切換
   const handleTabChange = (tab) => {
@@ -476,6 +502,30 @@ function Home() {
     }
   };
   
+  // 處理待辦任務狀態變更
+  const handleTaskStatusChange = (taskId) => {
+    setTodayTasks(todayTasks.map(task => 
+      task.id === taskId ? { ...task, completed: !task.completed } : task
+    ));
+  };
+  
+  // 處理任務完成狀態切換
+  const handleTaskComplete = async (taskId) => {
+    try {
+      await wishService.toggleTaskComplete(taskId);
+      // 更新本地狀態
+      setDailyTasks(prevTasks => 
+        prevTasks.map(task => 
+          task.id === taskId 
+            ? { ...task, completed: !task.completed }
+            : task
+        )
+      );
+    } catch (error) {
+      console.error('更新任務狀態失敗:', error);
+    }
+  };
+  
   // 渲染願望卡片
   const renderWishCard = (wish) => (
     <div 
@@ -634,7 +684,7 @@ function Home() {
             color: 'white',
             fontSize: '12px'
           }}
-          onClick={() => handleWishStatusChange(task.wishId, task.completed ? 'notStarted' : 'inProgress')}
+          onClick={() => handleTaskStatusChange(task.id)}
         >
           {task.completed && <i className="fas fa-check"></i>}
         </div>
@@ -716,27 +766,162 @@ function Home() {
         </div>
       </div>
       
+      {/* 今日待辦進度區 */}
+      <div className="wish-card" style={{ 
+        padding: '20px',
+        marginBottom: '20px',
+        backgroundColor: 'white',
+        borderRadius: '12px',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+      }}>
       <div style={{ 
         display: 'flex', 
         justifyContent: 'space-between', 
         alignItems: 'center', 
-        marginBottom: '20px' 
-      }}>
-        <h2 style={{ margin: 0 }}>{texts.home.title}</h2>
+          marginBottom: '15px'
+        }}>
+          <h2 style={{ 
+            margin: 0,
+            fontSize: '18px',
+            fontWeight: 'bold',
+            color: 'var(--text-primary)'
+          }}>
+            今日待辦進度
+          </h2>
+          <div style={{
+            fontSize: '14px',
+            color: 'var(--text-secondary)'
+          }}>
+            {new Date().toLocaleDateString('zh-TW', { 
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              weekday: 'long'
+            })}
+          </div>
       </div>
       
-      {/* 快速新增心願按鈕和添加新願望按鈕並排 */}
+        {isLoadingTasks ? (
+          <div style={{ textAlign: 'center', padding: '20px' }}>
+            載入中...
+          </div>
+        ) : dailyTasks.length === 0 ? (
       <div style={{ 
+            textAlign: 'center',
+            padding: '30px',
+            color: 'var(--text-secondary)'
+          }}>
+            <div style={{ fontSize: '48px', marginBottom: '10px' }}>📝</div>
+            <p>今天還沒有待辦進度</p>
+            <p style={{ fontSize: '14px' }}>開始規劃你的願望進度吧！</p>
+          </div>
+        ) : (
+          <div>
+            {dailyTasks.map((task, index) => (
+              <div 
+                key={task.id}
+                style={{
         display: 'flex', 
+                  alignItems: 'center',
+                  padding: '12px',
+                  borderRadius: '8px',
+                  backgroundColor: task.completed ? '#f8f9fa' : 'white',
+                  marginBottom: index < dailyTasks.length - 1 ? '10px' : 0,
+                  border: '1px solid #eee'
+                }}
+              >
+                <div 
+                  style={{ 
+                    width: '20px',
+                    height: '20px',
+                    borderRadius: '50%',
+                    border: `2px solid ${task.completed ? 'var(--success-color)' : 'var(--primary-color)'}`,
+                    backgroundColor: task.completed ? 'var(--success-color)' : 'white',
+                    marginRight: '12px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: 'white',
+                    fontSize: '12px'
+                  }}
+                  onClick={() => handleTaskComplete(task.id)}
+                >
+                  {task.completed && '✓'}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}>
+                    <div>
+                      <span style={{
+                        textDecoration: task.completed ? 'line-through' : 'none',
+                        color: task.completed ? 'var(--text-secondary)' : 'var(--text-primary)',
+                        marginRight: '8px'
+                      }}>
+                        {task.title}
+                      </span>
+                      <span style={{
+                        fontSize: '12px',
+                        color: 'var(--text-secondary)',
+                        backgroundColor: '#f8f9fa',
+                        padding: '2px 6px',
+                        borderRadius: '4px'
+                      }}>
+                        {task.wishTitle}
+                      </span>
+                    </div>
+                    <div style={{
+                      fontSize: '12px',
+                      color: 'var(--text-secondary)'
+                    }}>
+                      {task.time}
+                    </div>
+                  </div>
+                  {task.description && (
+                    <div style={{
+                      fontSize: '12px',
+                      color: 'var(--text-secondary)',
+                      marginTop: '4px'
+                    }}>
+                      {task.description}
+                    </div>
+                  )}
+                  <div style={{
+                    marginTop: '8px',
+                    height: '4px',
+                    backgroundColor: '#f0f0f0',
+                    borderRadius: '2px'
+                  }}>
+                    <div style={{
+                      width: `${task.progress || 0}%`,
+                      height: '100%',
+                      backgroundColor: task.completed ? 'var(--success-color)' : 'var(--primary-color)',
+                      borderRadius: '2px',
+                      transition: 'width 0.3s ease'
+                    }} />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      
+      {/* 快速操作按鈕區 */}
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(2, 1fr)', 
         gap: '15px', 
         marginBottom: '20px'
       }}>
-        {/* 快速新增心願按鈕 */}
+        {/* 添加新願望按鈕 */}
         <div 
           className="wish-card" 
           style={{ 
-            padding: '15px',
-            flex: 1,
+            padding: '12px',
             display: 'flex',
             alignItems: 'center',
             cursor: 'pointer',
@@ -744,32 +929,31 @@ function Home() {
             color: 'white',
             borderRadius: 'var(--radius-md)'
           }}
-          onClick={() => setShowQuickAddModal(true)}
+          onClick={handleAddWish}
         >
           <div style={{ 
-            width: '40px', 
-            height: '40px', 
+            width: '36px', 
+            height: '36px', 
             borderRadius: '50%', 
             backgroundColor: 'rgba(255, 255, 255, 0.2)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            marginRight: '15px'
+            marginRight: '12px'
           }}>
-            <i className="fas fa-bolt"></i>
+            <i className="fas fa-plus"></i>
           </div>
           <div>
-            <div style={{ fontWeight: 'bold' }}>{texts.home.quickAddWish}</div>
-            <div style={{ fontSize: '12px', opacity: 0.8 }}>{texts.home.quickAddDesc}</div>
+            <div style={{ fontWeight: 'bold' }}>{texts.home.addWish}</div>
+            <div style={{ fontSize: '12px', opacity: 0.8 }}>{texts.home.addWishDesc}</div>
           </div>
         </div>
-        
-        {/* 添加新願望按鈕 */}
+
+        {/* 快速新增按鈕 */}
         <div 
           className="wish-card" 
           style={{ 
-            padding: '15px',
-            flex: 1,
+            padding: '12px',
             display: 'flex',
             alignItems: 'center',
             cursor: 'pointer',
@@ -778,24 +962,174 @@ function Home() {
             borderRadius: 'var(--radius-md)',
             border: '1px solid var(--border-color)'
           }}
-          onClick={handleAddWish}
+          onClick={() => setShowQuickAddModal(true)}
         >
           <div style={{ 
-            width: '40px', 
-            height: '40px', 
+            width: '36px', 
+            height: '36px', 
             borderRadius: '50%', 
             backgroundColor: 'var(--primary-light)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            marginRight: '15px',
+            marginRight: '12px',
             color: 'var(--primary-color)'
           }}>
-            <i className="fas fa-plus"></i>
+            <i className="fas fa-bolt"></i>
           </div>
           <div>
-            <div style={{ fontWeight: 'bold' }}>{texts.home.addWish}</div>
-            <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{texts.home.addWishDesc}</div>
+            <div style={{ fontWeight: 'bold' }}>{texts.home.quickAddWish}</div>
+            <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{texts.home.quickAddDesc}</div>
+          </div>
+        </div>
+        
+        {/* 發起挑戰按鈕 */}
+        <div 
+          className="wish-card" 
+          style={{ 
+            padding: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            cursor: 'pointer',
+            backgroundColor: 'var(--background-color)',
+            color: 'var(--text-primary)',
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid var(--border-color)'
+          }}
+          onClick={() => navigate('/create-challenge')}
+        >
+          <div style={{ 
+            width: '36px', 
+            height: '36px', 
+            borderRadius: '50%', 
+            backgroundColor: 'var(--primary-light)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginRight: '12px',
+            color: 'var(--primary-color)'
+          }}>
+            <i className="fas fa-trophy"></i>
+          </div>
+          <div>
+            <div style={{ fontWeight: 'bold' }}>發起挑戰</div>
+            <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>邀請好友一起完成目標</div>
+          </div>
+        </div>
+
+        {/* 尋找支援按鈕 */}
+        <div 
+          className="wish-card" 
+          style={{ 
+            padding: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            cursor: 'pointer',
+            backgroundColor: 'var(--primary-color)',
+            color: 'white',
+            borderRadius: 'var(--radius-md)'
+          }}
+          onClick={() => navigate('/create-support')}
+        >
+          <div style={{ 
+            width: '36px', 
+            height: '36px', 
+            borderRadius: '50%', 
+            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginRight: '12px'
+          }}>
+            <i className="fas fa-hands-helping"></i>
+          </div>
+          <div>
+            <div style={{ fontWeight: 'bold' }}>尋找支援</div>
+            <div style={{ fontSize: '12px', opacity: 0.8 }}>尋找志同道合的夥伴</div>
+          </div>
+        </div>
+      </div>
+      
+      {/* 願望統計區塊 */}
+      <div className="wish-card" style={{ 
+        padding: '15px', 
+        marginBottom: '20px',
+        background: 'linear-gradient(135deg, var(--primary-light) 0%, var(--primary-color) 100%)',
+        borderRadius: 'var(--radius-md)',
+        color: 'white'
+      }}>
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(4, 1fr)', 
+          gap: '10px',
+          textAlign: 'center'
+        }}>
+          {/* 總願望 */}
+          <div style={{ 
+            padding: '8px', 
+            borderRadius: 'var(--radius-md)', 
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '2px'
+          }}>
+            <div style={{ fontSize: '20px', fontWeight: 'bold' }}>
+              {wishes.length}
+            </div>
+            <div style={{ fontSize: '12px', opacity: 0.9 }}>
+              {texts.wishlist.stats.total}
+            </div>
+          </div>
+          
+          {/* 已完成 */}
+          <div style={{ 
+            padding: '8px', 
+            borderRadius: 'var(--radius-md)', 
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '2px'
+          }}>
+            <div style={{ fontSize: '20px', fontWeight: 'bold' }}>
+              {wishes.filter(w => w.status === 'completed').length}
+            </div>
+            <div style={{ fontSize: '12px', opacity: 0.9 }}>
+              {texts.wishlist.stats.completed}
+            </div>
+          </div>
+          
+          {/* 進行中 */}
+          <div style={{ 
+            padding: '8px', 
+            borderRadius: 'var(--radius-md)', 
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '2px'
+          }}>
+            <div style={{ fontSize: '20px', fontWeight: 'bold' }}>
+              {wishes.filter(w => w.status === 'inProgress').length}
+            </div>
+            <div style={{ fontSize: '12px', opacity: 0.9 }}>
+              {texts.wishlist.stats.inProgress}
+            </div>
+          </div>
+          
+          {/* 未開始 */}
+          <div style={{ 
+            padding: '8px', 
+            borderRadius: 'var(--radius-md)', 
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '2px'
+          }}>
+            <div style={{ fontSize: '20px', fontWeight: 'bold' }}>
+              {wishes.filter(w => w.status === 'notStarted').length}
+            </div>
+            <div style={{ fontSize: '12px', opacity: 0.9 }}>
+              {texts.wishlist.stats.notStarted}
+            </div>
           </div>
         </div>
       </div>
@@ -875,153 +1209,6 @@ function Home() {
             </div>
           </div>
         ))}
-      </div>
-      
-      {/* 通知部分 */}
-      <div style={{ marginBottom: '20px' }}>
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          marginBottom: '20px'
-        }}>
-          <h3 style={{ margin: 0 }}>{notificationTexts.title}</h3>
-          {unreadCount > 0 && (
-            <button 
-              className="text-btn" 
-              onClick={markAllAsRead}
-            >
-              {notificationTexts.markAllAsRead}
-            </button>
-          )}
-        </div>
-        
-        {/* 分類標籤 */}
-        <div className="tab-container">
-          <div 
-            className={`tab ${notificationActiveTab === 'all' ? 'active' : ''}`} 
-            onClick={() => handleNotificationTabChange('all')}
-          >
-            {notificationTexts.tabs.all}
-          </div>
-          <div 
-            className={`tab ${notificationActiveTab === 'unread' ? 'active' : ''}`} 
-            onClick={() => handleNotificationTabChange('unread')}
-          >
-            {notificationTexts.tabs.unread} {unreadCount > 0 && `(${unreadCount})`}
-          </div>
-          <div 
-            className={`tab ${notificationActiveTab === 'social' ? 'active' : ''}`} 
-            onClick={() => handleNotificationTabChange('social')}
-          >
-            {notificationTexts.tabs.social}
-          </div>
-          <div 
-            className={`tab ${notificationActiveTab === 'system' ? 'active' : ''}`} 
-            onClick={() => handleNotificationTabChange('system')}
-          >
-            {notificationTexts.tabs.system}
-          </div>
-        </div>
-        
-        {/* 通知列表 */}
-        <div className="tab-content">
-          {notificationLoading ? (
-            <div style={{ textAlign: 'center', padding: '20px' }}>載入中...</div>
-          ) : filteredNotifications.length > 0 ? (
-            filteredNotifications.map(notification => (
-              <div 
-                key={notification.id} 
-                style={{ 
-                  display: 'flex', 
-                  padding: '15px',
-                  marginBottom: '10px',
-                  backgroundColor: notification.read ? 'white' : '#f0f8ff',
-                  borderRadius: '12px',
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)',
-                  cursor: 'pointer'
-                }}
-                onClick={() => handleNotificationClick(notification)}
-              >
-                {/* 通知類型圖標 */}
-                <div style={{ 
-                  marginRight: '15px',
-                  width: '40px',
-                  height: '40px',
-                  backgroundColor: '#f2f2f7',
-                  borderRadius: '20px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  {renderNotificationIcon(notification.type)}
-                </div>
-                
-                {/* 通知內容 */}
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: '5px' }}>
-                    {notification.user && (
-                      <span style={{ fontWeight: 'bold', marginRight: '5px' }}>
-                        {notification.user.name}
-                      </span>
-                    )}
-                    <span>{notification.content}</span>
-                  </div>
-                  
-                  {notification.targetTitle && (
-                    <div style={{ 
-                      fontSize: '14px', 
-                      color: '#636366',
-                      marginBottom: '5px'
-                    }}>
-                      "{notification.targetTitle}"
-                    </div>
-                  )}
-                  
-                  {notification.comment && (
-                    <div style={{ 
-                      fontSize: '14px',
-                      backgroundColor: '#f2f2f7',
-                      padding: '8px',
-                      borderRadius: '8px',
-                      marginBottom: '5px'
-                    }}>
-                      {notification.comment}
-                    </div>
-                  )}
-                  
-                  <div style={{ fontSize: '12px', color: '#8e8e93' }}>
-                    {notification.timestamp}
-                  </div>
-                </div>
-                
-                {/* 未讀標記 */}
-                {!notification.read && (
-                  <div style={{ 
-                    width: '10px',
-                    height: '10px',
-                    backgroundColor: '#007aff',
-                    borderRadius: '5px',
-                    alignSelf: 'center',
-                    marginLeft: '10px'
-                  }}></div>
-                )}
-              </div>
-            ))
-          ) : (
-            <div style={{ 
-              padding: '20px', 
-              textAlign: 'center',
-              backgroundColor: 'white',
-              borderRadius: '12px',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
-            }}>
-              <div style={{ fontSize: '48px', marginBottom: '10px' }}>📭</div>
-              <h3>{notificationTexts.noNotifications}</h3>
-              <p>{notificationTexts.noNotificationsDesc}</p>
-            </div>
-          )}
-        </div>
       </div>
       
       {/* 快速添加願望模態框 */}

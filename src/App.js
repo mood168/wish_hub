@@ -1,8 +1,9 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { DatabaseProvider } from './contexts/DatabaseContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import BottomNav from './components/BottomNav';
 import FloatingButton from './components/FloatingButton';
 import Home from './pages/Home';
@@ -36,11 +37,17 @@ const PrivateRoute = ({ children }) => {
 const AppContent = () => {
   const { isAuthenticated } = useAuth();
   const isNewUser = localStorage.getItem('isNewUser') === 'true';
+  const location = useLocation();
+
+  // 檢查當前路由是否需要顯示導航欄
+  const shouldShowNav = !['/login', '/register', '/onboarding', '/'].includes(location.pathname);
 
   return (
     <div className="iphone-simulator">
       <div className="app-container">
-        <div className="content-container">
+        <div className="content-container" style={{
+          minHeight: '100vh'
+        }}>
           <Routes>
             <Route path="/" element={<Welcome />} />
             <Route path="/login" element={<Login />} />
@@ -112,14 +119,8 @@ const AppContent = () => {
             <Route path="*" element={<Navigate to="/login" replace />} />
           </Routes>
         </div>
-        
-        {/* 使用 isAuthenticated 來控制底部導航和浮動按鈕的顯示 */}
-        {isAuthenticated && !isNewUser && (
-          <>
-            <BottomNav />
-            <FloatingButton />
-          </>
-        )}
+        {shouldShowNav && isAuthenticated && <BottomNav />}
+        {shouldShowNav && isAuthenticated && <FloatingButton />}
       </div>
     </div>
   );
@@ -131,7 +132,9 @@ function App() {
       <DatabaseProvider>
         <AuthProvider>
           <LanguageProvider>
-            <AppContent />
+            <NotificationProvider>
+              <AppContent />
+            </NotificationProvider>
           </LanguageProvider>
         </AuthProvider>
       </DatabaseProvider>

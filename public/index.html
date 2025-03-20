@@ -14,6 +14,24 @@
     <title>WishHub - 實現你的願望</title>
     <!-- Clerk 配置 -->
     <script src="%PUBLIC_URL%/clerk-config.js"></script>
+    <!-- 重導向設置 -->
+    <script>
+      // 這個腳本將處理直接訪問非根路徑的刷新問題
+      (function () {
+        // 在生產環境中處理重導向
+        if (
+          window.location.hostname !== "localhost" &&
+          window.location.hostname !== "127.0.0.1"
+        ) {
+          // 檢查是否在 404 頁面上
+          if (document.title === "404 Not Found") {
+            // 獲取當前路徑並重定向到帶有該路徑的根目錄
+            var path = window.location.pathname;
+            window.location.href = "/#" + path;
+          }
+        }
+      })();
+    </script>
   </head>
   <body>
     <noscript>您需要啟用 JavaScript 來運行此應用。</noscript>

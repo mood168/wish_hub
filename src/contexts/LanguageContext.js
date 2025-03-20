@@ -67,8 +67,11 @@ const translations = {
       title: '編輯個人資料',
       save: '儲存',
       saving: '儲存中...',
-      back: '回上一頁',
+      back: '返回',
       avatar: '個人頭像',
+      uploadCustomAvatar: '上傳專屬頭像',
+      chooseDefaultAvatar: '選擇預設頭像',
+      chooseFile: '選擇檔案',
       nickname: '暱稱',
       nicknamePlaceholder: '輸入您的暱稱',
       bio: {
@@ -212,7 +215,10 @@ const translations = {
       title: '會員等級說明',
       about: {
         title: '關於會員等級',
-        description: '願望中心提供不同的會員等級，每個等級都有專屬特權和功能，幫助您更有效地實現願望和目標。升級會員等級可以解鎖更多強大功能，讓您的願望追蹤體驗更加豐富和個人化。'
+        description: '願望中心提供不同的會員等級，每個等級都有專屬特權和功能，幫助您更有效地實現願望和目標。升級會員等級可以解鎖更多強大功能，讓您的願望追蹤體驗更加豐富和個人化。',
+        regular: '一般會員',
+        gold: '金牌會員',
+        diamond: '鑽石會員'
       },
       levels: {
         regular: {
@@ -369,6 +375,33 @@ const translations = {
           label: '分類',
           placeholder: '選擇分類'
         },
+        priority: {
+          label: '計畫優先等級',
+          placeholder: '選擇優先等級',
+          high: '高',
+          medium: '中',
+          low: '低',
+          highDesc: '需要立即關注和行動的重要目標',
+          mediumDesc: '需要持續關注但不緊急的目標',
+          lowDesc: '可以慢慢進行的次要目標'
+        },
+        goals: {
+          label: '目標設定',
+          dailyLabel: '每日目標',
+          weeklyLabel: '每週目標',
+          placeholder: '輸入目標內容',
+          add: '新增目標',
+          aiSuggestion: 'AI建議',
+          aiSettings: {
+            label: 'AI建議設定',
+            mode: {
+              label: '難度安排',
+              easyToHard: '由簡入難',
+              average: '平均難度',
+              hardToEasy: '由難入簡'
+            }
+          }
+        },
         tags: {
           label: '標籤',
           placeholder: '新增標籤',
@@ -487,6 +520,9 @@ const translations = {
       saving: 'Saving...',
       back: 'Back',
       avatar: 'Avatar',
+      uploadCustomAvatar: 'Upload Custom Avatar',
+      chooseDefaultAvatar: 'Choose Default Avatar',
+      chooseFile: 'Choose File',
       nickname: 'Nickname',
       nicknamePlaceholder: 'Enter your nickname',
       bio: {
@@ -630,7 +666,10 @@ const translations = {
       title: 'Member Level Information',
       about: {
         title: 'About Member Levels',
-        description: 'WishHub offers different membership levels, each with exclusive privileges and features to help you achieve your wishes and goals more effectively. Upgrading your membership level unlocks more powerful features, making your wish tracking experience richer and more personalized.'
+        description: 'WishHub offers different membership levels, each with exclusive privileges and features to help you achieve your wishes and goals more effectively. Upgrading your membership level unlocks more powerful features, making your wish tracking experience richer and more personalized.',
+        regular: 'Regular Member',
+        gold: 'Gold Member',
+        diamond: 'Diamond Member'
       },
       levels: {
         regular: {
@@ -787,6 +826,33 @@ const translations = {
           label: 'Category',
           placeholder: 'Select category'
         },
+        priority: {
+          label: '計畫優先等級',
+          placeholder: '選擇優先等級',
+          high: '高',
+          medium: '中',
+          low: '低',
+          highDesc: '需要立即關注和行動的重要目標',
+          mediumDesc: '需要持續關注但不緊急的目標',
+          lowDesc: '可以慢慢進行的次要目標'
+        },
+        goals: {
+          label: '目標設定',
+          dailyLabel: '每日目標',
+          weeklyLabel: '每週目標',
+          placeholder: '輸入目標內容',
+          add: '新增目標',
+          aiSuggestion: 'AI建議',
+          aiSettings: {
+            label: 'AI建議設定',
+            mode: {
+              label: '難度安排',
+              easyToHard: '由簡入難',
+              average: '平均難度',
+              hardToEasy: '由難入簡'
+            }
+          }
+        },
         tags: {
           label: 'Tags',
           placeholder: 'Add tag',
@@ -905,6 +971,9 @@ const translations = {
       saving: '保存中...',
       back: '戻る',
       avatar: 'アバター',
+      uploadCustomAvatar: 'カスタムアバターをアップロード',
+      chooseDefaultAvatar: 'デフォルトアバターを選択',
+      chooseFile: 'ファイルを選択',
       nickname: 'ニックネーム',
       nicknamePlaceholder: 'ニックネームを入力',
       bio: {
@@ -1048,45 +1117,48 @@ const translations = {
       title: '会員レベル情報',
       about: {
         title: '会員レベルについて',
-        description: 'WishHubでは、異なる会員レベルを提供しており、各レベルには願いや目標をより効果的に達成するための特典や機能があります。会員レベルをアップグレードすることで、より強力な機能が解放され、願い事の追跡体験がより豊かで個人的なものになります。'
+        description: 'WishHubでは、異なる会員レベルを提供しており、各レベルには願いや目標をより効果的に達成するための特典や機能があります。会員レベルをアップグレードすることで、より強力な機能が解放され、願い事の追跡体験がより豊かで個人的なものになります。',
+        regular: '一般會員',
+        gold: '金牌會員',
+        diamond: '鑽石會員'
       },
       levels: {
         regular: {
-          name: '一般会員',
-          description: '基本会員',
+          name: '一般會員',
+          description: '基本會員',
           howToGet: '',
           privileges: [
-            'ウィッシュリストを最大5つまで作成',
-            '基本的な願い事追跡機能を使用',
-            'コミュニティディスカッションに参加',
-            '週間進捗レポートを受け取る'
+            '創建最多 5 個願望清單',
+            '使用基本願望追蹤功能',
+            '參與社區討論',
+            '獲取每週進度報告'
           ]
         },
         gold: {
-          name: 'ゴールド会員',
-          description: '上級会員',
-          howToGet: '少なくとも10の願い事を完了するか、設定ページで会員レベルをアップグレードしてください。',
+          name: '金牌會員',
+          description: '進階會員',
+          howToGet: '完成至少 10 個願望，或在設定頁面中升級您的會員等級。',
           privileges: [
-            '無制限のウィッシュリストを作成',
-            '高度なデータ分析と視覚化',
-            '専用のゴールド会員バッジを獲得',
-            '新機能テストへの優先アクセス',
-            '月間のプロフェッショナルなアドバイスとガイダンスを受け取る',
-            '広告なし体験'
+            '創建無限願望清單',
+            '高級數據分析和視覺化',
+            '獲取專屬金牌會員徽章',
+            '優先參與新功能測試',
+            '每月收到專業建議和指導',
+            '無廣告體驗'
           ]
         },
         diamond: {
-          name: 'ダイヤモンド会員',
-          description: 'プレミアム会員',
-          howToGet: '少なくとも20の願い事を完了するか、設定ページで会員レベルをアップグレードしてください。',
+          name: '鑽石會員',
+          description: '尊榮會員',
+          howToGet: '完成至少 20 個願望，或在設定頁面中升級您的會員等級。',
           privileges: [
-            'ゴールド会員の特典をすべて含む',
-            '専用のダイヤモンド会員バッジを獲得',
-            'パーソナライズされた願い事達成戦略',
-            '専任カスタマーサポート',
-            '独占コミュニティイベントへの招待',
-            '週間のプロフェッショナルなコーチングガイダンス',
-            'プレミアムカスタムテーマへのアクセス'
+            '包含所有金牌會員特權',
+            '獲取專屬鑽石會員徽章',
+            '個人化願望達成策略',
+            '專屬客服支援',
+            '獲取獨家社區活動邀請',
+            '每週收到專業教練指導',
+            '可使用高級自定義主題'
           ]
         }
       },
@@ -1155,7 +1227,7 @@ const translations = {
       recommendedFollow: 'おすすめユーザー',
       follow: 'フォロー',
       noFollowing: 'まだ誰もフォローしていません',
-      noFollowingDesc: '他のユーザーをフォローして、彼らの願いと進捗を見てみましょう',
+      noFollowingDesc: '他のユーザーをフォローして彼らの願いと進捗を見てみましょう',
       explorePopular: '人気の願いを探索',
       noSearchResults: '結果が見つかりません',
       noSearchResultsDesc: '別のキーワードで検索してみてください',
@@ -1204,6 +1276,33 @@ const translations = {
         category: {
           label: 'カテゴリ',
           placeholder: 'カテゴリを選択'
+        },
+        priority: {
+          label: '計畫優先等級',
+          placeholder: '選擇優先等級',
+          high: '高',
+          medium: '中',
+          low: '低',
+          highDesc: '需要立即關注和行動的重要目標',
+          mediumDesc: '需要持續關注但不緊急的目標',
+          lowDesc: '可以慢慢進行的次要目標'
+        },
+        goals: {
+          label: '目標設定',
+          dailyLabel: '每日目標',
+          weeklyLabel: '每週目標',
+          placeholder: '輸入目標內容',
+          add: '新增目標',
+          aiSuggestion: 'AI建議',
+          aiSettings: {
+            label: 'AI建議設定',
+            mode: {
+              label: '難度安排',
+              easyToHard: '由簡入難',
+              average: '平均難度',
+              hardToEasy: '由難入簡'
+            }
+          }
         },
         tags: {
           label: 'タグ',

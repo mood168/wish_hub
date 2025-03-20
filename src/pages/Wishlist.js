@@ -15,6 +15,25 @@ function Wishlist() {
   const [userAvatar, setUserAvatar] = useState('');
   const [memberLevel, setMemberLevel] = useState('regular');
   
+  // 通知相關狀態
+  const [notifications, setNotifications] = useState([]);
+  const [notificationLoading, setNotificationLoading] = useState(true);
+  const [notificationActiveTab, setNotificationActiveTab] = useState('all');
+  
+  // 通知相關文字
+  const notificationTexts = {
+    title: texts.notifications?.title || '通知',
+    markAllAsRead: texts.notifications?.markAllAsRead || '標記全部為已讀',
+    noNotifications: texts.notifications?.noNotifications || '目前沒有通知',
+    noNotificationsDesc: texts.notifications?.noNotificationsDesc || '當有新的通知時，將會顯示在這裡',
+    tabs: {
+      all: texts.home?.tabs?.all || '全部',
+      unread: texts.notifications?.tabs?.unread || '未讀',
+      social: texts.notifications?.tabs?.social || '社交',
+      system: texts.notifications?.tabs?.system || '系統'
+    }
+  };
+  
   // 按鈕文字的多語言支持
   const buttonTexts = {
     startChallenge: texts.wishlist?.buttons?.startChallenge || '發起挑戰',
@@ -200,6 +219,71 @@ function Wishlist() {
       return () => clearTimeout(timer);
     }
   }, [activeWishlist]);
+  
+  // 獲取通知數據
+  useEffect(() => {
+    // 模擬API請求延遲
+    setTimeout(() => {
+      // 模擬通知數據
+      const notificationsData = [
+        {
+          id: 1,
+          type: 'like',
+          read: false,
+          timestamp: '2023-03-20 14:30',
+          user: {
+            name: '李小華',
+            username: 'xiaohua',
+            avatar: '👩‍🎓'
+          },
+          content: '喜歡了你的願望',
+          targetId: 101,
+          targetType: 'wish',
+          targetTitle: '學習日文 N3 程度'
+        },
+        {
+          id: 2,
+          type: 'comment',
+          read: false,
+          timestamp: '2023-03-19 09:45',
+          user: {
+            name: '張大明',
+            username: 'daming',
+            avatar: '👨‍🚀'
+          },
+          content: '評論了你的願望',
+          targetId: 101,
+          targetType: 'wish',
+          targetTitle: '學習日文 N3 程度',
+          comment: '推薦你使用「大家的日語」這本教材，我覺得很適合初學者！'
+        },
+        {
+          id: 3,
+          type: 'follow',
+          read: true,
+          timestamp: '2023-03-18 16:20',
+          user: {
+            name: '王文靜',
+            username: 'wenjing',
+            avatar: '👩‍💼'
+          },
+          content: '關注了你'
+        },
+        {
+          id: 4,
+          type: 'system',
+          read: true,
+          timestamp: '2023-03-17 10:00',
+          content: '恭喜你獲得「初學者」徽章！',
+          targetId: 1,
+          targetType: 'badge'
+        }
+      ];
+      
+      setNotifications(notificationsData);
+      setNotificationLoading(false);
+    }, 500);
+  }, []);
   
   // 處理願望列表點擊
   const handleWishlistClick = (wishlist) => {
@@ -389,6 +473,64 @@ function Wishlist() {
     }
   };
   
+  // 處理通知標籤切換
+  const handleNotificationTabChange = (tab) => {
+    setNotificationActiveTab(tab);
+  };
+  
+  // 處理通知點擊
+  const handleNotificationClick = (notification) => {
+    // 標記為已讀
+    setNotifications(notifications.map(n => 
+      n.id === notification.id ? {...n, read: true} : n
+    ));
+    
+    // 根據通知類型導航到相應頁面
+    if (notification.targetType === 'wish') {
+      navigate(`/wish/${notification.targetId}`);
+    } else if (notification.targetType === 'badge') {
+      navigate('/rewards');
+    } else if (notification.type === 'follow') {
+      // 導航到用戶資料頁面
+      console.log(`導航到用戶資料頁面: ${notification.user.username}`);
+    }
+  };
+  
+  // 標記所有通知為已讀
+  const markAllAsRead = () => {
+    setNotifications(notifications.map(n => ({...n, read: true})));
+  };
+  
+  // 渲染通知圖標
+  const renderNotificationIcon = (type) => {
+    switch (type) {
+      case 'like':
+        return <div style={{ fontSize: '20px' }}>❤️</div>;
+      case 'comment':
+        return <div style={{ fontSize: '20px' }}>💬</div>;
+      case 'follow':
+        return <div style={{ fontSize: '20px' }}>👥</div>;
+      case 'system':
+        return <div style={{ fontSize: '20px' }}>🔔</div>;
+      case 'progress':
+        return <div style={{ fontSize: '20px' }}>📈</div>;
+      default:
+        return <div style={{ fontSize: '20px' }}>📩</div>;
+    }
+  };
+  
+  // 過濾通知
+  const filteredNotifications = notifications.filter(notification => {
+    if (notificationActiveTab === 'all') return true;
+    if (notificationActiveTab === 'unread') return !notification.read;
+    if (notificationActiveTab === 'social') return ['like', 'comment', 'follow'].includes(notification.type);
+    if (notificationActiveTab === 'system') return ['system', 'progress'].includes(notification.type);
+    return true;
+  });
+  
+  // 計算未讀通知數量
+  const unreadCount = notifications.filter(n => !n.read).length;
+  
   if (loading) {
     return (
       <div className="content-area" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '80vh' }}>
@@ -399,8 +541,6 @@ function Wishlist() {
   
   return (
     <div className="content-area">
-      <h2>{texts.wishlist.title}</h2>
-      
       {/* 統計卡片 - 移至頂部 */}
       <div className="wish-card" style={{ 
         padding: '20px', 
@@ -436,6 +576,23 @@ function Wishlist() {
             <div style={{ fontSize: '14px', opacity: 0.9 }}>{texts.wishlist.stats.notStarted}</div>
           </div>
         </div>
+      </div>
+      
+      {/* 願望列表標題和操作按鈕 */}
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        marginBottom: '20px' 
+      }}>
+        <div></div>
+        <button 
+          className="primary-btn"
+          onClick={handleAddWish}
+        >
+          <i className="fas fa-plus" style={{ marginRight: '8px' }}></i>
+          {texts.wishlist.addWish}
+        </button>
       </div>
       
       {/* 統一設計的四個按鈕 */}
