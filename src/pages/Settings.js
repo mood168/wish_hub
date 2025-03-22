@@ -188,7 +188,8 @@ function Settings() {
       localStorage.setItem('fontSize', fontSize);
       localStorage.setItem('notificationTypes', JSON.stringify(notificationTypes));
       localStorage.setItem('memberLevel', user.memberLevel);
-      
+      // 語言設定已在 handleLanguageChange 中透過 changeLanguage 函數更新
+
       setSavingSettings(false);
       setSettingsChanged(false);
       

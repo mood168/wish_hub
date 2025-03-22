@@ -4,6 +4,7 @@ import { DatabaseProvider } from './contexts/DatabaseContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { ServicesProvider } from './contexts/ServicesContext';
 import BottomNav from './components/BottomNav';
 import FloatingButton from './components/FloatingButton';
 import Home from './pages/Home';
@@ -133,7 +134,9 @@ function App() {
         <AuthProvider>
           <LanguageProvider>
             <NotificationProvider>
-              <AppContent />
+              <ServicesProvider>
+                <AppContent />
+              </ServicesProvider>
             </NotificationProvider>
           </LanguageProvider>
         </AuthProvider>

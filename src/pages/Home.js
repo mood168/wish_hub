@@ -154,7 +154,7 @@ function Home() {
         }
         
         // 從資料庫獲取願望
-        const wishesData = await wishService.getWishes(user.id);
+        const wishesData = await wishService.getWishes({ userId: user.id });
         
         // 檢查返回的數據
         if (!Array.isArray(wishesData)) {
@@ -176,37 +176,60 @@ function Home() {
     }
   }, [wishService, dbLoading, user, navigate]);
   
-  // 獲取今日待辦任務
+  // 當願望數據更新時，刷新To-Do Lists
+  useEffect(() => {
+    if (wishes && wishes.length > 0) {
+      fetchTodayTasks();
+    }
+  }, [wishes]);
+  
+  // 獲取進行中的願望To-Do Lists
   const fetchTodayTasks = () => {
-    // 模擬從後端獲取今日待辦任務
-    setTimeout(() => {
-      const today = new Date().toISOString().split('T')[0];
-      const todayTasksData = [
-        {
-          id: 301,
-          title: '日文單字複習',
-          completed: false,
-          wishId: 101,
-          time: '09:00'
-        },
-        {
-          id: 302,
-          title: '健身房訓練',
-          completed: true,
-          wishId: 102,
-          time: '18:30'
-        },
-        {
-          id: 303,
-          title: '閱讀《百年孤獨》第三章',
-          completed: false,
-          wishId: 104,
-          time: '21:00'
-        }
-      ];
+    setIsLoadingTasks(true);
+    
+    // 獲取當前用戶的所有進行中的願望
+    try {
+      // 過濾出進行中的願望
+      const activeWishes = wishes.filter(wish => wish.status === 'inProgress');
       
-      setTodayTasks(todayTasksData);
-    }, 600);
+      // 為每個願望整理To-Do Lists，確保兼容舊數據模型
+      const wishesWithTasks = activeWishes.map(wish => {
+        // 確保dailyGoals和weeklyGoals存在
+        const dailyGoals = Array.isArray(wish.dailyGoals) ? wish.dailyGoals : [];
+        const weeklyGoals = Array.isArray(wish.weeklyGoals) ? wish.weeklyGoals : [];
+        
+        return {
+          id: wish.id,
+          title: wish.title,
+          category: wish.category || '未分類',
+          dailyTasks: dailyGoals.map((goal, index) => ({
+            id: `${wish.id}-daily-${index}`,
+            title: goal,
+            type: 'daily',
+          completed: false,
+            wishId: wish.id
+          })),
+          weeklyTasks: weeklyGoals.map((goal, index) => ({
+            id: `${wish.id}-weekly-${index}`,
+            title: goal,
+            type: 'weekly',
+          completed: false,
+            wishId: wish.id
+          }))
+        };
+      });
+      
+      // 過濾出至少有一個 To-Do List 項目的願望
+      const wishesWithTasksFiltered = wishesWithTasks.filter(
+        wish => wish.dailyTasks.length > 0 || wish.weeklyTasks.length > 0
+      );
+      
+      setDailyTasks(wishesWithTasksFiltered);
+    } catch (error) {
+      console.error('獲取願望To-Do List時出錯:', error);
+    } finally {
+      setIsLoadingTasks(false);
+    }
   };
   
   // 獲取通知數據
@@ -291,24 +314,6 @@ function Home() {
     }, 500);
   };
   
-  // 獲取當日待辦進度
-  useEffect(() => {
-    const fetchDailyTasks = async () => {
-      try {
-        setIsLoadingTasks(true);
-        // TODO: 從資料庫獲取當日待辦進度
-        const tasks = await wishService.getDailyTasks();
-        setDailyTasks(tasks);
-      } catch (error) {
-        console.error('獲取每日待辦進度失敗:', error);
-      } finally {
-        setIsLoadingTasks(false);
-      }
-    };
-
-    fetchDailyTasks();
-  }, []);
-  
   // 處理標籤切換
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -316,7 +321,12 @@ function Home() {
   
   // 處理願望點擊
   const handleWishClick = (wishId) => {
+    console.log('正在跳轉到願望詳情頁:', wishId);
+    
+    // 添加一個小延遲以確保之前的數據操作完成
+    setTimeout(() => {
     navigate(`/wish-detail/${wishId}`);
+    }, 100);
   };
   
   // 處理添加願望
@@ -512,17 +522,59 @@ function Home() {
   // 處理任務完成狀態切換
   const handleTaskComplete = async (taskId) => {
     try {
-      await wishService.toggleTaskComplete(taskId);
-      // 更新本地狀態
-      setDailyTasks(prevTasks => 
+      // 檢查 taskId 格式，解析出願望 ID 和任務類型
+      const [wishId, taskType, taskIndex] = taskId.split('-');
+      
+      // 首先更新本地狀態
+      setDailyTasks(prevTasks => {
+        // 創建一個新的陣列，避免直接修改原始狀態
+        return prevTasks.map(wish => {
+          // 找到包含此任務的願望
+          if (wish.id === wishId) {
+            // 根據任務類型（每日或每週）更新相應的任務陣列
+            if (taskType === 'daily') {
+              const updatedDailyTasks = wish.dailyTasks.map((task, idx) => {
+                if (task.id === taskId) {
+                  return { ...task, completed: !task.completed };
+                }
+                return task;
+              });
+              
+              return { ...wish, dailyTasks: updatedDailyTasks };
+            } else if (taskType === 'weekly') {
+              const updatedWeeklyTasks = wish.weeklyTasks.map((task, idx) => {
+                if (task.id === taskId) {
+                  return { ...task, completed: !task.completed };
+                }
+                return task;
+              });
+              
+              return { ...wish, weeklyTasks: updatedWeeklyTasks };
+            }
+          }
+          
+          // 如果不是目標願望，直接返回原始願望物件
+          return wish;
+        });
+      });
+      
+      // 同時更新 todayTasks 保持一致性
+      setTodayTasks(prevTasks => 
         prevTasks.map(task => 
           task.id === taskId 
             ? { ...task, completed: !task.completed }
             : task
         )
       );
+
+      // 然後嘗試通過 API 更新資料庫
+      await wishService.toggleTaskComplete(taskId);
+      
+      console.log(`任務 ${taskId} 狀態已更新`);
     } catch (error) {
       console.error('更新任務狀態失敗:', error);
+      // 如果 API 調用失敗，可以在這裡添加錯誤提示
+      alert('更新任務狀態失敗，請稍後再試');
     }
   };
   
@@ -602,12 +654,15 @@ function Home() {
       
       <div style={{ display: 'flex', flexWrap: 'wrap', marginBottom: '15px' }}>
         {wish.tags && wish.tags.map((tag, index) => (
-          <div 
-            key={index}
-            className="tag"
-          >
-            #{tag}
-          </div>
+          <span key={index} style={{
+            backgroundColor: '#F0F2F5',
+            padding: '4px 8px',
+            borderRadius: '12px',
+            fontSize: '12px',
+            color: '#666'
+          }}>
+            {tag}
+          </span>
         ))}
       </div>
       
@@ -766,7 +821,7 @@ function Home() {
         </div>
       </div>
       
-      {/* 今日待辦進度區 */}
+      {/* 今日To-Do List區 */}
       <div className="wish-card" style={{ 
         padding: '20px',
         marginBottom: '20px',
@@ -786,7 +841,7 @@ function Home() {
             fontWeight: 'bold',
             color: 'var(--text-primary)'
           }}>
-            今日待辦進度
+            今日To-Do List
           </h2>
           <div style={{
             fontSize: '14px',
@@ -812,102 +867,182 @@ function Home() {
             color: 'var(--text-secondary)'
           }}>
             <div style={{ fontSize: '48px', marginBottom: '10px' }}>📝</div>
-            <p>今天還沒有待辦進度</p>
-            <p style={{ fontSize: '14px' }}>開始規劃你的願望進度吧！</p>
+            <p>目前沒有進行中的願望To-Do List</p>
+            <p style={{ fontSize: '14px' }}>開始新增你的願望To-Do List吧！</p>
           </div>
         ) : (
           <div>
-            {dailyTasks.map((task, index) => (
+            {dailyTasks.map((wish) => (
               <div 
-                key={task.id}
+                key={wish.id}
                 style={{
-        display: 'flex', 
-                  alignItems: 'center',
-                  padding: '12px',
+                  marginBottom: '20px',
+                  padding: '15px',
                   borderRadius: '8px',
-                  backgroundColor: task.completed ? '#f8f9fa' : 'white',
-                  marginBottom: index < dailyTasks.length - 1 ? '10px' : 0,
+                  backgroundColor: '#f8f9fa',
                   border: '1px solid #eee'
                 }}
               >
-                <div 
-                  style={{ 
-                    width: '20px',
-                    height: '20px',
-                    borderRadius: '50%',
-                    border: `2px solid ${task.completed ? 'var(--success-color)' : 'var(--primary-color)'}`,
-                    backgroundColor: task.completed ? 'var(--success-color)' : 'white',
-                    marginRight: '12px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    fontSize: '12px'
-                  }}
-                  onClick={() => handleTaskComplete(task.id)}
-                >
-                  {task.completed && '✓'}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: '10px'
+                }}>
+                  <h3 style={{
+                    margin: 0,
+                    fontSize: '16px',
+                    fontWeight: 'bold',
+                    color: 'var(--text-primary)'
                   }}>
-                    <div>
-                      <span style={{
-                        textDecoration: task.completed ? 'line-through' : 'none',
-                        color: task.completed ? 'var(--text-secondary)' : 'var(--text-primary)',
-                        marginRight: '8px'
-                      }}>
-                        {task.title}
-                      </span>
-                      <span style={{
-                        fontSize: '12px',
-                        color: 'var(--text-secondary)',
-                        backgroundColor: '#f8f9fa',
-                        padding: '2px 6px',
-                        borderRadius: '4px'
-                      }}>
-                        {task.wishTitle}
-                      </span>
-                    </div>
-                    <div style={{
-                      fontSize: '12px',
+                    {wish.title}
+                  </h3>
+                </div>
+                
+                {/* 每日To-Do List */}
+                {wish.dailyTasks.length > 0 && (
+                  <div style={{ marginBottom: '15px' }}>
+                    <h4 style={{
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      marginBottom: '8px',
                       color: 'var(--text-secondary)'
                     }}>
-                      {task.time}
-                    </div>
+                      每日TDL項目
+                    </h4>
+                    {wish.dailyTasks.map((task) => (
+                      <div 
+                        key={task.id}
+                        style={{
+                          display: 'flex', 
+                          alignItems: 'center',
+                          padding: '8px',
+                          borderRadius: '6px',
+                          backgroundColor: 'white',
+                          marginBottom: '6px',
+                          border: '1px solid #eee'
+                        }}
+                      >
+                        <div 
+                          style={{ 
+                            width: '18px',
+                            height: '18px',
+                            borderRadius: '50%',
+                            border: `2px solid ${task.completed ? 'var(--success-color)' : 'var(--primary-color)'}`,
+                            backgroundColor: task.completed ? 'var(--success-color)' : 'white',
+                            marginRight: '10px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'white',
+                            fontSize: '12px'
+                          }}
+                          onClick={() => handleTaskComplete(task.id)}
+                        >
+                          {task.completed && '✓'}
+                        </div>
+                        <div style={{ 
+                          fontSize: '14px',
+                          textDecoration: task.completed ? 'line-through' : 'none',
+                          color: task.completed ? 'var(--text-secondary)' : 'var(--text-primary)',
+                          transition: 'all 0.3s ease'
+                        }}>
+                          {task.title}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  {task.description && (
-                    <div style={{
-                      fontSize: '12px',
-                      color: 'var(--text-secondary)',
-                      marginTop: '4px'
+                )}
+                
+                {/* 每週To-Do List */}
+                {wish.weeklyTasks.length > 0 && (
+                  <div>
+                    <h4 style={{
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      marginBottom: '8px',
+                      color: 'var(--text-secondary)'
                     }}>
-                      {task.description}
-                    </div>
-                  )}
-                  <div style={{
-                    marginTop: '8px',
-                    height: '4px',
-                    backgroundColor: '#f0f0f0',
-                    borderRadius: '2px'
-                  }}>
-                    <div style={{
-                      width: `${task.progress || 0}%`,
-                      height: '100%',
-                      backgroundColor: task.completed ? 'var(--success-color)' : 'var(--primary-color)',
-                      borderRadius: '2px',
-                      transition: 'width 0.3s ease'
-                    }} />
+                      每周TDL項目
+                    </h4>
+                    {wish.weeklyTasks.map((task) => (
+                      <div 
+                        key={task.id}
+                        style={{
+                          display: 'flex', 
+                          alignItems: 'center',
+                          padding: '8px',
+                          borderRadius: '6px',
+                          backgroundColor: 'white',
+                          marginBottom: '6px',
+                          border: '1px solid #eee'
+                        }}
+                      >
+                        <div 
+                          style={{ 
+                            width: '18px',
+                            height: '18px',
+                            borderRadius: '50%',
+                            border: `2px solid ${task.completed ? 'var(--success-color)' : 'var(--primary-color)'}`,
+                            backgroundColor: task.completed ? 'var(--success-color)' : 'white',
+                            marginRight: '10px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'white',
+                            fontSize: '12px'
+                          }}
+                          onClick={() => handleTaskComplete(task.id)}
+                        >
+                          {task.completed && '✓'}
+                        </div>
+                        <div style={{ 
+                          fontSize: '14px',
+                          textDecoration: task.completed ? 'line-through' : 'none',
+                          color: task.completed ? 'var(--text-secondary)' : 'var(--text-primary)',
+                          transition: 'all 0.3s ease'
+                        }}>
+                          {task.title}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </div>
+                )}
+                
+                {wish.dailyTasks.length === 0 && wish.weeklyTasks.length === 0 && (
+                  <div style={{ textAlign: 'center', padding: '10px', color: 'var(--text-secondary)', fontSize: '14px' }}>
+                    尚未設定To-Do List項目
+                  </div>
+                )}
               </div>
             ))}
           </div>
         )}
+        
+        {/* Add New Wish 按鈕 */}
+        <div style={{ marginTop: '20px', textAlign: 'center' }}>
+          <button
+            onClick={handleAddWish}
+            style={{
+              padding: '10px 20px',
+              borderRadius: '8px',
+              backgroundColor: 'var(--primary-color)',
+              color: 'white',
+              border: 'none',
+              cursor: 'pointer',
+              fontSize: '14px',
+              fontWeight: '500',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            <i className="fas fa-plus"></i>
+            新增願望
+          </button>
+        </div>
       </div>
       
       {/* 快速操作按鈕區 */}
@@ -1065,14 +1200,21 @@ function Home() {
           textAlign: 'center'
         }}>
           {/* 總願望 */}
-          <div style={{ 
-            padding: '8px', 
-            borderRadius: 'var(--radius-md)', 
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '2px'
-          }}>
+          <div 
+            style={{ 
+              padding: '8px', 
+              borderRadius: 'var(--radius-md)', 
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '2px',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              boxShadow: activeTab === 'all' ? '0 0 10px rgba(255,255,255,0.5)' : 'none',
+              background: activeTab === 'all' ? 'rgba(255,255,255,0.2)' : 'transparent'
+            }}
+            onClick={() => handleTabChange('all')}
+          >
             <div style={{ fontSize: '20px', fontWeight: 'bold' }}>
               {wishes.length}
             </div>
@@ -1081,32 +1223,22 @@ function Home() {
             </div>
           </div>
           
-          {/* 已完成 */}
-          <div style={{ 
-            padding: '8px', 
-            borderRadius: 'var(--radius-md)', 
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '2px'
-          }}>
-            <div style={{ fontSize: '20px', fontWeight: 'bold' }}>
-              {wishes.filter(w => w.status === 'completed').length}
-            </div>
-            <div style={{ fontSize: '12px', opacity: 0.9 }}>
-              {texts.wishlist.stats.completed}
-            </div>
-          </div>
-          
           {/* 進行中 */}
-          <div style={{ 
-            padding: '8px', 
-            borderRadius: 'var(--radius-md)', 
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '2px'
-          }}>
+          <div 
+            style={{ 
+              padding: '8px', 
+              borderRadius: 'var(--radius-md)', 
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '2px',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              boxShadow: activeTab === 'inProgress' ? '0 0 10px rgba(255,255,255,0.5)' : 'none',
+              background: activeTab === 'inProgress' ? 'rgba(255,255,255,0.2)' : 'transparent'
+            }}
+            onClick={() => handleTabChange('inProgress')}
+          >
             <div style={{ fontSize: '20px', fontWeight: 'bold' }}>
               {wishes.filter(w => w.status === 'inProgress').length}
             </div>
@@ -1116,14 +1248,21 @@ function Home() {
           </div>
           
           {/* 未開始 */}
-          <div style={{ 
-            padding: '8px', 
-            borderRadius: 'var(--radius-md)', 
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '2px'
-          }}>
+          <div 
+            style={{ 
+              padding: '8px', 
+              borderRadius: 'var(--radius-md)', 
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '2px',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              boxShadow: activeTab === 'notStarted' ? '0 0 10px rgba(255,255,255,0.5)' : 'none',
+              background: activeTab === 'notStarted' ? 'rgba(255,255,255,0.2)' : 'transparent'
+            }}
+            onClick={() => handleTabChange('notStarted')}
+          >
             <div style={{ fontSize: '20px', fontWeight: 'bold' }}>
               {wishes.filter(w => w.status === 'notStarted').length}
             </div>
@@ -1131,35 +1270,31 @@ function Home() {
               {texts.wishlist.stats.notStarted}
             </div>
           </div>
+          
+          {/* 已完成 */}
+          <div 
+            style={{ 
+              padding: '8px', 
+              borderRadius: 'var(--radius-md)', 
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '2px',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              boxShadow: activeTab === 'completed' ? '0 0 10px rgba(255,255,255,0.5)' : 'none',
+              background: activeTab === 'completed' ? 'rgba(255,255,255,0.2)' : 'transparent'
+            }}
+            onClick={() => handleTabChange('completed')}
+          >
+            <div style={{ fontSize: '20px', fontWeight: 'bold' }}>
+              {wishes.filter(w => w.status === 'completed').length}
+            </div>
+            <div style={{ fontSize: '12px', opacity: 0.9 }}>
+              {texts.wishlist.stats.completed}
+            </div>
+          </div>
         </div>
-      </div>
-      
-      {/* 狀態篩選按鈕 */}
-      <div style={{ display: 'flex', marginBottom: '20px', overflowX: 'auto', padding: '8px 0' }}>
-        <button
-          style={tabButtonStyle(activeTab === 'all')}
-          onClick={() => handleTabChange('all')}
-        >
-          全部
-        </button>
-        <button
-          style={tabButtonStyle(activeTab === 'notStarted')}
-          onClick={() => handleTabChange('notStarted')}
-        >
-          未開始
-        </button>
-        <button
-          style={tabButtonStyle(activeTab === 'inProgress')}
-          onClick={() => handleTabChange('inProgress')}
-        >
-          進行中
-        </button>
-        <button
-          style={tabButtonStyle(activeTab === 'completed')}
-          onClick={() => handleTabChange('completed')}
-        >
-          已完成
-        </button>
       </div>
       
       {/* 願望列表 */}
@@ -1188,7 +1323,7 @@ function Home() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <span style={{ color: '#666', fontSize: '14px' }}>{wish.category}</span>
-                {wish.tags.map((tag, index) => (
+                {wish.tags && wish.tags.map((tag, index) => (
                   <span key={index} style={{
                     backgroundColor: '#F0F2F5',
                     padding: '4px 8px',

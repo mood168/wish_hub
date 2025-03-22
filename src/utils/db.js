@@ -46,6 +46,211 @@ export const userService = {
   async updateUser(id, changes) {
     await db.users.update(id, changes);
     return await db.users.get(id);
+  },
+
+  // 獲取用戶朋友列表
+  async getUserFriends(userId) {
+    try {
+      // 獲取用戶資料
+      const user = await db.users.get(String(userId));
+      if (!user) {
+        console.log('獲取朋友列表失敗: 用戶不存在');
+        return [];
+      }
+      
+      // 如果用戶沒有朋友列表，返回空數組
+      if (!user.friends || !Array.isArray(user.friends)) {
+        return [];
+      }
+      
+      // 獲取所有朋友的詳細資料
+      const friendIds = user.friends.map(friendId => String(friendId));
+      const friends = await db.users.where('id').anyOf(friendIds).toArray();
+      
+      // 移除敏感資訊
+      return friends.map(friend => {
+        const { password, ...friendData } = friend;
+        return friendData;
+      });
+    } catch (error) {
+      console.error('獲取朋友列表失敗:', error);
+      return [];
+    }
+  },
+
+  // 添加朋友
+  async addFriend(userId, friendId) {
+    try {
+      // 確保 ID 是字串類型
+      userId = String(userId);
+      friendId = String(friendId);
+      
+      // 不能添加自己為朋友
+      if (userId === friendId) {
+        throw new Error('不能添加自己為朋友');
+      }
+      
+      // 獲取用戶資料
+      const user = await db.users.get(userId);
+      const friend = await db.users.get(friendId);
+      
+      if (!user) {
+        throw new Error('用戶不存在');
+      }
+      
+      if (!friend) {
+        throw new Error('要添加的朋友不存在');
+      }
+      
+      // 確保用戶有朋友列表
+      if (!user.friends || !Array.isArray(user.friends)) {
+        user.friends = [];
+      }
+      
+      // 檢查是否已經是朋友
+      if (user.friends.includes(friendId)) {
+        return { success: true, message: '已經是朋友了' };
+      }
+      
+      // 添加朋友關係
+      user.friends.push(friendId);
+      
+      // 更新用戶資料
+      await db.users.update(userId, { friends: user.friends });
+      
+      // 互相添加朋友關係 (雙向好友)
+      if (!friend.friends || !Array.isArray(friend.friends)) {
+        friend.friends = [];
+      }
+      
+      if (!friend.friends.includes(userId)) {
+        friend.friends.push(userId);
+        await db.users.update(friendId, { friends: friend.friends });
+      }
+      
+      return { success: true, message: '添加朋友成功' };
+    } catch (error) {
+      console.error('添加朋友失敗:', error);
+      return { success: false, message: error.message || '添加朋友失敗' };
+    }
+  },
+  
+  // 移除朋友
+  async removeFriend(userId, friendId) {
+    try {
+      // 確保 ID 是字串類型
+      userId = String(userId);
+      friendId = String(friendId);
+      
+      // 獲取用戶資料
+      const user = await db.users.get(userId);
+      const friend = await db.users.get(friendId);
+      
+      if (!user) {
+        throw new Error('用戶不存在');
+      }
+      
+      // 確保用戶有朋友列表
+      if (!user.friends || !Array.isArray(user.friends)) {
+        return { success: true, message: '用戶沒有朋友' };
+      }
+      
+      // 檢查是否是朋友
+      if (!user.friends.includes(friendId)) {
+        return { success: true, message: '他們不是朋友' };
+      }
+      
+      // 移除朋友關係
+      user.friends = user.friends.filter(id => id !== friendId);
+      
+      // 更新用戶資料
+      await db.users.update(userId, { friends: user.friends });
+      
+      // 互相移除朋友關係 (如果對方存在)
+      if (friend && friend.friends && Array.isArray(friend.friends)) {
+        friend.friends = friend.friends.filter(id => id !== userId);
+        await db.users.update(friendId, { friends: friend.friends });
+      }
+      
+      return { success: true, message: '移除朋友成功' };
+    } catch (error) {
+      console.error('移除朋友失敗:', error);
+      return { success: false, message: error.message || '移除朋友失敗' };
+    }
+  },
+  
+  // 檢查朋友關係
+  async checkFriendship(userId, otherUserId) {
+    try {
+      // 確保 ID 是字串類型
+      userId = String(userId);
+      otherUserId = String(otherUserId);
+      
+      // 獲取用戶資料
+      const user = await db.users.get(userId);
+      
+      if (!user) {
+        return { isFriend: false, error: '用戶不存在' };
+      }
+      
+      // 檢查朋友列表
+      if (!user.friends || !Array.isArray(user.friends)) {
+        return { isFriend: false };
+      }
+      
+      // 返回朋友關係狀態
+      return { isFriend: user.friends.includes(otherUserId) };
+    } catch (error) {
+      console.error('檢查朋友關係失敗:', error);
+      return { isFriend: false, error: error.message || '檢查朋友關係失敗' };
+    }
+  },
+
+  // 檢查願望訪問權限
+  async checkWishAccessPermission(wishId, userId) {
+    try {
+      // 如果沒有用戶 ID，表示未登入，只能查看公開願望
+      if (!userId) {
+        const wish = await db.wishes.get(String(wishId));
+        return wish && wish.visibility === 'public';
+      }
+      
+      // 確保 ID 是字串類型
+      wishId = String(wishId);
+      userId = String(userId);
+      
+      // 獲取願望資料
+      const wish = await db.wishes.get(wishId);
+      
+      if (!wish) {
+        return false; // 願望不存在
+      }
+      
+      // 如果是創建者，直接授權訪問
+      if (String(wish.userId) === userId) {
+        return true;
+      }
+      
+      // 根據隱私設定檢查訪問權限
+      switch (wish.visibility) {
+        case 'public':
+          return true; // 公開願望，任何人都可以訪問
+          
+        case 'friends':
+          // 檢查朋友關係
+          const friendshipCheck = await this.checkFriendship(wish.userId, userId);
+          return friendshipCheck.isFriend;
+          
+        case 'private':
+          return false; // 私人願望，只有創建者可以訪問
+          
+        default:
+          return false; // 未知的隱私設定，默認拒絕訪問
+      }
+    } catch (error) {
+      console.error('檢查願望訪問權限失敗:', error);
+      return false;
+    }
   }
 };
 
@@ -87,43 +292,110 @@ export const wishService = {
   
   // 獲取單個願望
   async getWish(id) {
-    // 確保 id 是數字類型
-    let wishId = id;
-    if (typeof id === 'string') {
-      try {
-        wishId = parseInt(id);
-        if (isNaN(wishId)) {
-          wishId = id; // 如果轉換失敗，使用原始值
-        }
-      } catch (e) {
-        console.error('無法將 id 轉換為整數:', id);
-        wishId = id; // 如果轉換失敗，使用原始值
-      }
-    }
+    console.log('db.js getWish 被調用，原始 id:', id, '類型:', typeof id);
     
-    // 嘗試獲取願望
+    // 確保 id 是字符串類型
+    let wishId = String(id);
+    console.log('轉換後的 wishId:', wishId, '類型:', typeof wishId);
+    
     try {
       const wish = await db.wishes.get(wishId);
+      console.log('查詢結果:', wish ? '找到願望' : '未找到願望');
       return wish;
     } catch (error) {
-      console.error('獲取願望時出錯:', error);
-      return null;
+      console.error('在 db.js 中獲取願望時出錯:', error);
+      console.error('錯誤詳情:', error.message);
+      console.error('錯誤堆棧:', error.stack);
+      throw error; // 重新拋出錯誤以供上層處理
     }
   },
   
   // 創建願望
-  async createWish(wish) {
-    return await db.wishes.add({
-      ...wish,
-      createdAt: new Date().toISOString(),
-      progress: 0
-    });
+  async createWish(wishData) {
+    console.log('createWish 被調用，參數:', wishData);
+    try {
+      if (!wishData) {
+        console.error('創建願望失敗: 願望數據為空');
+        return null;
+      }
+      
+      // 確保必要字段存在並有預設值
+      const wish = {
+        ...wishData,
+        id: wishData.id || `wish_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+        userId: String(wishData.userId || ''),
+        createdAt: wishData.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        progress: wishData.progress || 0,
+        comments: wishData.comments || [],
+        steps: Array.isArray(wishData.steps) ? wishData.steps : [],
+        dailyGoals: Array.isArray(wishData.dailyGoals) ? wishData.dailyGoals : [],
+        weeklyGoals: Array.isArray(wishData.weeklyGoals) ? wishData.weeklyGoals : [],
+        progressByDate: wishData.progressByDate || {},
+        dailyProgress: wishData.dailyProgress || {},
+        weeklyProgress: wishData.weeklyProgress || {},
+        progressLog: wishData.progressLog || []
+      };
+      
+      console.log('準備添加到數據庫的願望:', wish);
+      
+      // 使用數據庫添加願望
+      const id = await db.wishes.add(wish);
+      console.log('願望已添加，ID:', id);
+      
+      // 獲取剛添加的願望
+      const savedWish = await db.wishes.get(id);
+      console.log('已保存的願望:', savedWish);
+      
+      return savedWish;
+    } catch (error) {
+      console.error('創建願望時出錯:', error);
+      return null;
+    }
   },
   
   // 更新願望
   async updateWish(id, changes) {
-    await db.wishes.update(id, changes);
-    return await db.wishes.get(id);
+    console.log('更新願望請求:', { id, changes });
+    
+    try {
+      const db = await this.getDB();
+      const tx = db.transaction('wishes', 'readwrite');
+      const store = tx.objectStore('wishes');
+      
+      // 先獲取現有的願望
+      const wish = await store.get(id);
+      
+      if (!wish) {
+        console.error('找不到要更新的願望:', id);
+        return null;
+      }
+      
+      // 處理各種特殊字段
+      const updatedWish = { ...wish };
+      
+      // 更新基本字段
+      for (const key in changes) {
+        if (changes.hasOwnProperty(key)) {
+          updatedWish[key] = changes[key];
+        }
+      }
+      
+      // 刪除對 tasks 的特殊處理邏輯
+      
+      // 更新時間戳
+      updatedWish.updatedAt = new Date().toISOString();
+      
+      // 保存更新後的願望
+      await store.put(updatedWish);
+      await tx.done;
+      
+      console.log('願望更新成功:', updatedWish);
+      return updatedWish;
+    } catch (error) {
+      console.error('更新願望出錯:', error);
+      return null;
+    }
   },
   
   // 刪除願望
@@ -176,44 +448,243 @@ export const wishService = {
   // 更新願望進度數據
   async updateWishProgress(wishId, progressData) {
     console.log('updateWishProgress called with:', { wishId, progressData });
+    try {
+      // 確保 wishId 是字串
+      const wishIdStr = String(wishId);
     
-    // 獲取當前願望
-    const wish = await db.wishes.get(wishId);
+      // 獲取現有的願望資料
+      const wish = await db.wishes.get(wishIdStr);
     if (!wish) {
-      console.error('Wish not found:', wishId);
+        console.log('Wish not found in updateWishProgress');
       return null;
     }
     
-    // 更新願望的進度數據
-    const updatedWish = {
-      ...wish,
-      dailyProgress: progressData.dailyProgress !== undefined ? progressData.dailyProgress : wish.dailyProgress,
-      weeklyProgress: progressData.weeklyProgress !== undefined ? progressData.weeklyProgress : wish.weeklyProgress,
+      // 準備更新的資料，開始時使用現有的資料
+      const updateData = {
+        dailyProgress: wish.dailyProgress || {},
+        weeklyProgress: wish.weeklyProgress || {},
+        progressByDate: wish.progressByDate || {},
       updatedAt: new Date().toISOString()
     };
     
-    // 儲存更新
-    await db.wishes.update(wishId, updatedWish);
+      // 處理 dailyProgress (如果有提供)
+      if (progressData.dailyProgress !== undefined) {
+        const normalizedDailyProgress = {};
+        // 過濾掉 undefined 和 null 值
+        Object.entries(progressData.dailyProgress).forEach(([key, value]) => {
+          if (value !== null && value !== undefined) {
+            normalizedDailyProgress[String(key)] = value;
+          }
+        });
+        updateData.dailyProgress = normalizedDailyProgress;
+      }
+      
+      // 處理 weeklyProgress (如果有提供)
+      if (progressData.weeklyProgress !== undefined) {
+        const normalizedWeeklyProgress = {};
+        // 過濾掉 undefined 和 null 值
+        Object.entries(progressData.weeklyProgress).forEach(([key, value]) => {
+          if (value !== null && value !== undefined) {
+            normalizedWeeklyProgress[String(key)] = value;
+          }
+        });
+        updateData.weeklyProgress = normalizedWeeklyProgress;
+      }
+      
+      // 處理 progressByDate (如果有提供)
+      if (progressData.progressByDate !== undefined) {
+        const normalizedProgressByDate = {};
+        
+        Object.entries(progressData.progressByDate).forEach(([date, dateProgress]) => {
+          // 確保 dateProgress 不是 null 或 undefined
+          if (dateProgress !== null && dateProgress !== undefined) {
+            normalizedProgressByDate[date] = {
+              daily: {},
+              weekly: {}
+            };
+            
+            // 處理每日進度
+            if (dateProgress.daily) {
+              Object.entries(dateProgress.daily).forEach(([key, value]) => {
+                if (value !== null && value !== undefined) {
+                  normalizedProgressByDate[date].daily[String(key)] = value;
+                }
+              });
+            }
+            
+            // 處理每週進度
+            if (dateProgress.weekly) {
+              Object.entries(dateProgress.weekly).forEach(([key, value]) => {
+                if (value !== null && value !== undefined) {
+                  normalizedProgressByDate[date].weekly[String(key)] = value;
+                }
+              });
+            }
+          }
+        });
+        
+        updateData.progressByDate = normalizedProgressByDate;
+      }
+      
+      // 只保留非 undefined 的值
+      const finalUpdateData = {};
+      Object.entries(updateData).forEach(([key, value]) => {
+        if (value !== undefined) {
+          finalUpdateData[key] = value;
+        }
+      });
+      
+      console.log('最終更新資料庫的資料:', finalUpdateData);
+      
+      // 更新數據庫
+      await db.wishes.update(wishIdStr, finalUpdateData);
+      
+      // 獲取更新後的願望資料
+      const updatedWish = await db.wishes.get(wishIdStr);
     console.log('Wish progress updated:', updatedWish);
     
     return updatedWish;
+    } catch (error) {
+      console.error('Error in updateWishProgress:', error);
+      return null;
+    }
   },
   
   // 獲取願望的進度數據
   async getWishProgress(wishId) {
     console.log('getWishProgress called with:', wishId);
+    try {
+      const wishIdStr = String(wishId);
+      console.log('正在使用字串 ID 獲取願望:', wishIdStr);
+      
+      const wish = await db.wishes.get(wishIdStr);
     
-    // 獲取當前願望
-    const wish = await db.wishes.get(wishId);
     if (!wish) {
-      console.error('Wish not found:', wishId);
+        console.log('Wish not found in getWishProgress');
+        // 返回完整的空結構
+        return {
+          dailyProgress: {},
+          weeklyProgress: {},
+          progressByDate: {}
+        };
+      }
+      
+      // 確保索引都是字串類型，並且過濾掉 null 和 undefined 值
+      const normalizedDailyProgress = {};
+      const normalizedWeeklyProgress = {};
+      const normalizedProgressByDate = {};
+      
+      // 處理 dailyProgress
+      if (wish.dailyProgress && typeof wish.dailyProgress === 'object') {
+        Object.entries(wish.dailyProgress).forEach(([key, value]) => {
+          if (value !== null && value !== undefined) {
+            normalizedDailyProgress[String(key)] = value;
+          }
+        });
+      }
+      
+      // 處理 weeklyProgress
+      if (wish.weeklyProgress && typeof wish.weeklyProgress === 'object') {
+        Object.entries(wish.weeklyProgress).forEach(([key, value]) => {
+          if (value !== null && value !== undefined) {
+            normalizedWeeklyProgress[String(key)] = value;
+          }
+        });
+      }
+      
+      // 處理 progressByDate
+      if (wish.progressByDate && typeof wish.progressByDate === 'object') {
+        Object.entries(wish.progressByDate).forEach(([date, dateProgress]) => {
+          if (dateProgress && typeof dateProgress === 'object') {
+            normalizedProgressByDate[date] = {
+              daily: {},
+              weekly: {}
+            };
+            
+            // 處理每日進度
+            if (dateProgress.daily && typeof dateProgress.daily === 'object') {
+              Object.entries(dateProgress.daily).forEach(([key, value]) => {
+                if (value !== null && value !== undefined) {
+                  normalizedProgressByDate[date].daily[String(key)] = value;
+                }
+              });
+            }
+            
+            // 處理每週進度
+            if (dateProgress.weekly && typeof dateProgress.weekly === 'object') {
+              Object.entries(dateProgress.weekly).forEach(([key, value]) => {
+                if (value !== null && value !== undefined) {
+                  normalizedProgressByDate[date].weekly[String(key)] = value;
+                }
+              });
+            }
+          }
+        });
+      }
+      
+      // 確保日期為今天的結構一定存在
+      const today = new Date().toISOString().split('T')[0];
+      if (!normalizedProgressByDate[today]) {
+        normalizedProgressByDate[today] = {
+          daily: {},
+          weekly: {}
+        };
+      }
+      
+      const result = {
+        dailyProgress: normalizedDailyProgress, 
+        weeklyProgress: normalizedWeeklyProgress,
+        progressByDate: normalizedProgressByDate
+      };
+      
+      console.log('返回的處理過的進度數據:', result);
+      return result;
+    } catch (error) {
+      console.error('Error in getWishProgress:', error);
+      // 返回完整的空結構以防錯誤
+      return {
+        dailyProgress: {},
+        weeklyProgress: {},
+        progressByDate: {
+          [new Date().toISOString().split('T')[0]]: {
+            daily: {},
+            weekly: {}
+          }
+        }
+      };
+    }
+  },
+  
+  // 添加願望
+  async addWish(wish) {
+    try {
+      console.log('addWish 被調用，參數:', wish);
+      
+      // 確保所有 ID 都是字串類型
+      const normalizedWish = { ...wish };
+      
+      if (normalizedWish.userId) {
+        normalizedWish.userId = String(normalizedWish.userId);
+      }
+      
+      if (Array.isArray(normalizedWish.steps)) {
+        normalizedWish.steps = normalizedWish.steps.map(step => ({
+          ...step,
+          id: step.id ? String(step.id) : undefined
+        }));
+      }
+      
+      // 確保進度數據結構存在
+      if (!normalizedWish.dailyProgress) normalizedWish.dailyProgress = {};
+      if (!normalizedWish.weeklyProgress) normalizedWish.weeklyProgress = {};
+      if (!normalizedWish.progressByDate) normalizedWish.progressByDate = {};
+      
+      // 使用 createWish 方法存儲願望
+      return await this.createWish(normalizedWish);
+    } catch (error) {
+      console.error('添加願望時出錯:', error);
       return null;
     }
-    
-    return {
-      dailyProgress: wish.dailyProgress || {},
-      weeklyProgress: wish.weeklyProgress || {}
-    };
   }
 };
 

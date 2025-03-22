@@ -97,7 +97,7 @@ const translations = {
         notStarted: '未開始'
       },
       popularWishes: '熱門願望',
-      todayTasks: '今日待辦',
+      todayTasks: '今日To-Do List',
       addWish: '新增願望',
       quickAddWish: '快速新增',
       quickAddDesc: '立即記錄靈感',
@@ -387,8 +387,8 @@ const translations = {
         },
         goals: {
           label: '目標設定',
-          dailyLabel: '每日目標',
-          weeklyLabel: '每週目標',
+          dailyLabel: '每日To-Do List',
+          weeklyLabel: '每周To-Do List',
           placeholder: '輸入目標內容',
           add: '新增目標',
           aiSuggestion: 'AI建議',
@@ -416,6 +416,13 @@ const translations = {
           private: '私人',
           publicDesc: '其他用戶可以看到您的願望',
           privateDesc: '只有您能看到這個願望'
+        },
+        anonymous: {
+          label: '匿名設定',
+          public: '顯示身份',
+          private: '匿名',
+          publicDesc: '其他用戶可以看到您的個人資訊',
+          privateDesc: '您的個人資訊將不會顯示給其他用戶'
         }
       },
       submit: '創建願望',
@@ -812,66 +819,64 @@ const translations = {
     // Add Wish Page
     addWish: {
       title: 'Add Wish',
+      submit: 'Submit',
+      submitting: 'Submitting...',
+      submitSuccess: 'Wish created successfully!',
       cancel: 'Cancel',
+      requiredFields: 'Please fill in required fields (title, description, category)',
       fields: {
         title: {
-          label: 'Title',
+          label: 'Wish Title',
           placeholder: 'Enter wish title'
         },
         description: {
-          label: 'Description',
-          placeholder: 'Describe your wish'
+          label: 'Wish Description',
+          placeholder: 'Describe your wish...'
         },
         category: {
           label: 'Category',
           placeholder: 'Select category'
         },
-        priority: {
-          label: '計畫優先等級',
-          placeholder: '選擇優先等級',
-          high: '高',
-          medium: '中',
-          low: '低',
-          highDesc: '需要立即關注和行動的重要目標',
-          mediumDesc: '需要持續關注但不緊急的目標',
-          lowDesc: '可以慢慢進行的次要目標'
-        },
-        goals: {
-          label: '目標設定',
-          dailyLabel: '每日目標',
-          weeklyLabel: '每週目標',
-          placeholder: '輸入目標內容',
-          add: '新增目標',
-          aiSuggestion: 'AI建議',
-          aiSettings: {
-            label: 'AI建議設定',
-            mode: {
-              label: '難度安排',
-              easyToHard: '由簡入難',
-              average: '平均難度',
-              hardToEasy: '由難入簡'
-            }
-          }
-        },
-        tags: {
-          label: 'Tags',
-          placeholder: 'Add tag',
-          add: 'Add'
-        },
         dueDate: {
-          label: 'Due Date'
+          label: 'Due Date',
+          placeholder: 'Select date'
+        },
+        priority: {
+          label: 'Priority'
         },
         visibility: {
           label: 'Visibility',
           public: 'Public',
+          friends: 'Friends Only',
           private: 'Private',
-          publicDesc: 'Other users can see your wish',
+          publicDesc: 'Everyone can see this wish',
+          friendsDesc: 'Only your friends can see this wish',
           privateDesc: 'Only you can see this wish'
+        },
+        anonymous: {
+          label: 'Anonymous Setting',
+          public: 'Show Identity',
+          private: 'Anonymous',
+          publicDesc: 'Other users can see your personal information',
+          privateDesc: 'Your personal information will not be shown to other users'
+        },
+        tags: {
+          label: 'Tags',
+          placeholder: 'Enter tag and press Enter'
+        },
+        goals: {
+          label: 'Goal Setting',
+          daily: 'Daily To-Do List',
+          weekly: 'Weekly To-Do List',
+          dailyDesc: 'Set small daily goals to help you achieve your wish step by step',
+          weeklyDesc: 'Set weekly milestone goals',
+          placeholder: 'Enter goal and press Enter'
+        },
+        tasks: {
+          label: 'Stage Tasks',
+          placeholder: 'Enter task and press Enter'
         }
-      },
-      submit: 'Create Wish',
-      submitting: 'Creating...',
-      requiredFields: 'Please fill in the required fields'
+      }
     },
     // Color Options
     colorOptions: {
@@ -1289,8 +1294,8 @@ const translations = {
         },
         goals: {
           label: '目標設定',
-          dailyLabel: '每日目標',
-          weeklyLabel: '每週目標',
+          dailyLabel: '每日To-Do List',
+          weeklyLabel: '每周To-Do List',
           placeholder: '輸入目標內容',
           add: '新增目標',
           aiSuggestion: 'AI建議',
@@ -1315,9 +1320,18 @@ const translations = {
         visibility: {
           label: '公開設定',
           public: '公開',
-          private: '非公開',
-          publicDesc: '他のユーザーがあなたのウィッシュを見ることができます',
-          privateDesc: 'あなただけがこのウィッシュを見ることができます'
+          friends: '好友可見',
+          private: '私密',
+          publicDesc: '所有人都能看到您的願望',
+          friendsDesc: '只有您的好友能看到您的願望',
+          privateDesc: '只有您能看到這個願望'
+        },
+        anonymous: {
+          label: '匿名設定',
+          public: '顯示身份',
+          private: '匿名',
+          publicDesc: '其他用戶可以看到您的個人資訊',
+          privateDesc: '您的個人資訊將不會顯示給其他用戶'
         }
       },
       submit: 'ウィッシュを作成',
@@ -1362,20 +1376,45 @@ const LanguageContext = createContext();
 
 // 語言提供者組件
 export const LanguageProvider = ({ children }) => {
-  const [language, setLanguage] = useState('zh-TW');
-  const [texts, setTexts] = useState(translations['zh-TW']);
+  const [language, setLanguage] = useState(() => {
+    // 初始化狀態時直接從 localStorage 獲取語言設置
+    const userSelectedLanguage = localStorage.getItem('userLanguage');
+    return userSelectedLanguage || localStorage.getItem('language') || 'zh-TW';
+  });
+  
+  // 語言代碼映射，確保簡短代碼能找到對應的翻譯
+  const getLanguageCode = (code) => {
+    const languageMap = {
+      'en': 'en-US',
+      'zh': 'zh-TW'
+    };
+    return languageMap[code] || code;
+  };
+  
+  const [texts, setTexts] = useState(() => {
+    // 初始化狀態時直接從 localStorage 獲取語言設置並選擇對應的翻譯
+    const userSelectedLanguage = localStorage.getItem('userLanguage');
+    const savedLanguage = userSelectedLanguage || localStorage.getItem('language') || 'zh-TW';
+    const languageCode = getLanguageCode(savedLanguage);
+    return translations[languageCode] || translations['zh-TW'];
+  });
 
   useEffect(() => {
-    // 從 localStorage 獲取語言設定
-    const savedLanguage = localStorage.getItem('language') || 'zh-TW';
-    setLanguage(savedLanguage);
-    setTexts(translations[savedLanguage] || translations['zh-TW']);
-  }, []);
+    console.log('LanguageProvider初始化，當前語言:', language);
+  }, [language]);
 
   // 更新語言
   const changeLanguage = (newLanguage) => {
+    console.log('切換語言到:', newLanguage);
     setLanguage(newLanguage);
-    setTexts(translations[newLanguage] || translations['zh-TW']);
+    
+    // 使用映射獲取正確的語言代碼
+    const languageCode = getLanguageCode(newLanguage);
+    console.log('使用的翻譯代碼:', languageCode);
+    setTexts(translations[languageCode] || translations['zh-TW']);
+    
+    // 同時更新兩個存儲的語言值，保持它們同步
+    localStorage.setItem('userLanguage', newLanguage);
     localStorage.setItem('language', newLanguage);
   };
 

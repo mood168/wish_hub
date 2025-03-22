@@ -229,7 +229,7 @@ code {
 .content-area {
   padding: 16px;
   padding-top: 0; /* 移除頂部內邊距 */
-  padding-bottom: 70px !important; /* 確保底部有足夠空間 */
+  padding-bottom: 150px !important; /* 確保底部有足夠空間，避免被導航欄遮擋 */
   border-radius: var(--radius-lg);
   overflow-y: auto;
   height: 100%;
@@ -810,7 +810,7 @@ code {
   
   .content-area {
     padding: 16px;
-    padding-bottom: 70px !important; /* 確保底部有足夠空間 */
+    padding-bottom: 150px !important; /* 確保底部有足夠空間，避免被導航欄遮擋 */
     border-radius: var(--radius-lg);
     overflow-y: auto;
     height: 100%;
@@ -838,7 +838,7 @@ code {
   
   .content-area {
     padding: 16px;
-    padding-bottom: 70px !important; /* 確保底部有足夠空間 */
+    padding-bottom: 150px !important; /* 確保底部有足夠空間，避免被導航欄遮擋 */
   }
 }
 
@@ -1089,7 +1089,7 @@ code {
   
   .content-area {
     padding: 16px;
-    padding-bottom: 70px !important; /* 確保底部有足夠空間 */
+    padding-bottom: 150px !important; /* 確保底部有足夠空間，避免被導航欄遮擋 */
     border-radius: var(--radius-lg);
     overflow-y: auto;
     height: 100%;
@@ -1117,7 +1117,7 @@ code {
   
   .content-area {
     padding: 16px;
-    padding-bottom: 70px !important; /* 確保底部有足夠空間 */
+    padding-bottom: 150px !important; /* 確保底部有足夠空間，避免被導航欄遮擋 */
   }
 }
 
